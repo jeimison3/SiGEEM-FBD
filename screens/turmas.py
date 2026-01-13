@@ -1,98 +1,140 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
 class TurmasScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username="Admin"):
         self.root = root
         self.username = username
+        self.dados_turmas = [
+            {'id': 1, 'nome': '1º Ano A', 'ano': '2024', 'turno': 'Manhã'}
+        ] 
+        self.proximo_id = 2
+        
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
         
         self.create_widgets()
         self.carregar_dados()
-    
+
     def create_widgets(self):
         # Header
-        header = tk.Frame(self.frame, bg='#4CAF50', height=60)
+        header = tk.Frame(self.frame, bg='#4CAF50', height=50)
         header.pack(fill='x')
-        
-        tk.Label(header, text="Gerenciamento de Turmas", 
-                font=('Arial', 16, 'bold'), bg='#4CAF50', 
-                fg='white').pack(side='left', padx=20, pady=15)
-        
-        back_btn = tk.Button(header, text="← Voltar", font=('Arial', 10),
-                            bg='#2E7D32', fg='white', 
-                            command=self.voltar, cursor='hand2', padx=15)
-        back_btn.pack(side='right', padx=20)
-        
-        # Botões de ação
-        btn_frame = tk.Frame(self.frame, bg='#f0f0f0')
-        btn_frame.pack(pady=20)
-        
-        tk.Button(btn_frame, text="Novo", font=('Arial', 11, 'bold'),
-                 bg='#4CAF50', fg='white', width=12, command=self.novo,
-                 cursor='hand2').grid(row=0, column=0, padx=5)
-        
-        tk.Button(btn_frame, text="Editar", font=('Arial', 11, 'bold'),
-                 bg='#FF9800', fg='white', width=12, command=self.editar,
-                 cursor='hand2').grid(row=0, column=1, padx=5)
-        
-        tk.Button(btn_frame, text="Remover", font=('Arial', 11, 'bold'),
-                 bg='#F44336', fg='white', width=12, command=self.remover,
-                 cursor='hand2').grid(row=0, column=2, padx=5)
-        
-        # Treeview
-        tree_frame = tk.Frame(self.frame, bg='white')
-        tree_frame.pack(pady=10, padx=20, fill='both', expand=True)
-        
-        scrollbar = ttk.Scrollbar(tree_frame)
-        scrollbar.pack(side='right', fill='y')
-        
-        self.tree = ttk.Treeview(tree_frame, columns=('ID', 'Nome', 'Ano', 'Turno'),
-                                show='headings', yscrollcommand=scrollbar.set)
-        
-        self.tree.heading('ID', text='ID')
-        self.tree.heading('Nome', text='Nome')
-        self.tree.heading('Ano', text='Ano')
-        self.tree.heading('Turno', text='Turno')
-        
-        self.tree.column('ID', width=50)
-        self.tree.column('Nome', width=250)
-        self.tree.column('Ano', width=100)
-        self.tree.column('Turno', width=150)
-        
-        self.tree.pack(side='left', fill='both', expand=True)
-        scrollbar.config(command=self.tree.yview)
-    
-    def carregar_dados(self):
-        """TODO: Implementar carregamento de dados do banco"""
-        self.tree.insert('', 'end', values=(1, '1º Ano A', 2024, 'Manhã'))
-        self.tree.insert('', 'end', values=(2, '2º Ano B', 2024, 'Tarde'))
-    
-    def novo(self):
-        """TODO: Implementar inserção no banco de dados"""
-        messagebox.showinfo("Info", "Função NOVO - Implementar inserção no banco")
-    
-    def editar(self):
-        """TODO: Implementar edição no banco de dados"""
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showwarning("Aviso", "Selecione uma turma para editar!")
-            return
-        messagebox.showinfo("Info", "Função EDITAR - Implementar atualização no banco")
-    
-    def remover(self):
-        """TODO: Implementar remoção do banco de dados"""
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showwarning("Aviso", "Selecione uma turma para remover!")
-            return
-        messagebox.showinfo("Info", "Função REMOVER - Implementar exclusão do banco")
-    
-    def voltar(self):
-        self.frame.destroy()
-        # IMPORTAÇÃO LOCAL
-        from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        tk.Label(header, text="Sistema de Turmas", font=('Arial', 14, 'bold'), 
+                 bg='#4CAF50', fg='white').pack(pady=10)
 
+        # Barra de Busca (CONSULTA/FILTRAGEM) - 1,5 pts
+        search_frame = tk.Frame(self.frame, bg='#f0f0f0')
+        search_frame.pack(fill='x', padx=20, pady=10)
+        tk.Label(search_frame, text="🔍 Filtrar por nome:", bg='#f0f0f0').pack(side='left')
+        self.ent_filtro = tk.Entry(search_frame)
+        self.ent_filtro.pack(side='left', padx=5, expand=True, fill='x')
+        self.ent_filtro.bind('<KeyRelease>', lambda e: self.carregar_dados())
+
+        # Botões Principais (INCLUSÃO, EDIÇÃO, REMOÇÃO) - 4,5 pts
+        btn_frame = tk.Frame(self.frame, bg='#f0f0f0')
+        btn_frame.pack(pady=5)
+        
+        tk.Button(btn_frame, text="➕ Novo", bg='#4CAF50', fg='white', width=10,
+                  command=self.abrir_formulario).pack(side='left', padx=5)
+        
+        # AQUI ESTÁ O BOTÃO EDITAR
+        tk.Button(btn_frame, text="✏️ Editar", bg='#FF9800', fg='white', width=10,
+                  command=self.preparar_edicao).pack(side='left', padx=5)
+        
+        tk.Button(btn_frame, text="🗑️ Remover", bg='#F44336', fg='white', width=10,
+                  command=self.remover).pack(side='left', padx=5)
+
+        # Tabela
+        self.tree = ttk.Treeview(self.frame, columns=('ID', 'Nome', 'Ano', 'Turno'), show='headings')
+        for col in ('ID', 'Nome', 'Ano', 'Turno'):
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=100, anchor='center')
+        self.tree.pack(padx=20, pady=10, fill='both', expand=True)
+
+    def carregar_dados(self):
+        """Lógica de filtragem"""
+        for i in self.tree.get_children(): self.tree.delete(i)
+        filtro = self.ent_filtro.get().lower()
+        for t in self.dados_turmas:
+            if filtro in t['nome'].lower():
+                self.tree.insert('', 'end', values=(t['id'], t['nome'], t['ano'], t['turno']))
+
+    def preparar_edicao(self):
+        """Verifica se há algo selecionado antes de abrir o formulário de edição"""
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Atenção", "Selecione uma turma na tabela para editar!")
+            return
+        
+        # Pega os dados da linha selecionada
+        valores = self.tree.item(sel)['values']
+        # Chama o formulário passando os dados para preenchimento
+        self.abrir_formulario(editar=True, dados_atuais=valores)
+
+    def abrir_formulario(self, editar=False, dados_atuais=None):
+        """Janela única para Cadastro e Edição"""
+        janela_form = tk.Toplevel(self.root)
+        janela_form.title("Editar Turma" if editar else "Nova Turma")
+        janela_form.geometry("300x300")
+        janela_form.grab_set()
+
+        tk.Label(janela_form, text="Nome da Turma:").pack(pady=(10,0))
+        ent_nome = tk.Entry(janela_form)
+        ent_nome.pack(padx=20, fill='x')
+
+        tk.Label(janela_form, text="Ano Letivo:").pack(pady=(10,0))
+        ent_ano = tk.Entry(janela_form)
+        ent_ano.pack(padx=20, fill='x')
+
+        tk.Label(janela_form, text="Turno:").pack(pady=(10,0))
+        cb_turno = ttk.Combobox(janela_form, values=["Manhã", "Tarde", "Noite"])
+        cb_turno.pack(padx=20, fill='x')
+
+        # Se for edição, preenche os campos com os valores atuais
+        if editar:
+            ent_nome.insert(0, dados_atuais[1])
+            ent_ano.insert(0, dados_atuais[2])
+            cb_turno.set(dados_atuais[3])
+
+        def salvar():
+            nome, ano, turno = ent_nome.get(), ent_ano.get(), cb_turno.get()
+            if not (nome and ano and turno):
+                messagebox.showwarning("Erro", "Todos os campos são obrigatórios!")
+                return
+
+            if editar:
+                # Localiza pelo ID e atualiza a lista
+                for t in self.dados_turmas:
+                    if t['id'] == dados_atuais[0]:
+                        t['nome'], t['ano'], t['turno'] = nome, ano, turno
+                messagebox.showinfo("Sucesso", "Turma atualizada!")
+            else:
+                # Cria novo registro
+                nova_turma = {'id': self.proximo_id, 'nome': nome, 'ano': ano, 'turno': turno}
+                self.dados_turmas.append(nova_turma)
+                self.proximo_id += 1
+                messagebox.showinfo("Sucesso", "Turma cadastrada!")
+            
+            self.carregar_dados()
+            janela_form.destroy()
+
+        tk.Button(janela_form, text="Confirmar", bg='#2196F3', fg='white', 
+                  command=salvar, height=2).pack(pady=20, padx=20, fill='x')
+
+    def remover(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Atenção", "Selecione uma turma para remover!")
+            return
+        
+        if messagebox.askyesno("Confirmar", "Deseja excluir esta turma?"):
+            id_rem = self.tree.item(sel)['values'][0]
+            self.dados_turmas = [t for t in self.dados_turmas if t['id'] != id_rem]
+            self.carregar_dados()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.geometry("600x500")
+    app = TurmasScreen(root)
+    root.mainloop()
