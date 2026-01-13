@@ -44,20 +44,12 @@ class Disciplina(Base):
     professor_id = Column(Integer, ForeignKey('professores.id'))
 
 class Nota(Base):
-    __tablename__ = 'notas'
+    __tablename__ = 'Nota'
     
-    id = Column(Integer, primary_key=True)
-    aluno_id = Column(Integer, ForeignKey('alunos.id'))
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
+    id_turma = Column(Integer, ForeignKey('turma.id_turma'), primary_key=True)
+    id_aluno = Column(Integer, ForeignKey('aluno.id_aluno'), primary_key=True)
+    id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), primary_key=True)
+    id_professor = Column(Integer, ForeignKey('professor.id_professor'), primary_key=True)
+    id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
-    bimestre = Column(Integer)
-
-class Frequencia(Base):
-    __tablename__ = 'frequencias'
-    
-    id = Column(Integer, primary_key=True)
-    aluno_id = Column(Integer, ForeignKey('alunos.id'))
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
-    data = Column(Date)
-    presente = Column(Integer)  # 1 para presente, 0 para ausente
-
+    peso = Column(Float)
