@@ -39,7 +39,7 @@ class DashboardScreen:
             ("Alunos", self.abrir_alunos, '#2196F3'),
             ("Professores", self.abrir_professores, '#FF9800'),
             ("Disciplinas", self.abrir_disciplinas, '#9C27B0'),
-            # ("Notas", self.abrir_notas, '#F44336'),
+            ("Notas", self.abrir_notas, '#F44336'),
             # ("Frequência", self.abrir_frequencia, '#00BCD4')
         ]
         
@@ -76,12 +76,12 @@ class DashboardScreen:
         # IMPORTAÇÃO LOCAL
         from screens.disciplinas import DisciplinasScreen
         DisciplinasScreen(self.root, self.username)
-    
-    # def abrir_notas(self):
-    #     self.frame.destroy()
-    #     # IMPORTAÇÃO LOCAL
-    #     from screens.notas import NotasScreen
-    #     NotasScreen(self.root, self.username)
+        
+    def abrir_notas(self):
+        self.frame.destroy()
+        # IMPORTAÇÃO LOCAL
+        from screens.notas import NotasScreen
+        NotasScreen(self.root, self.username)
     
     # def abrir_frequencia(self):
     #     self.frame.destroy()
