@@ -9,7 +9,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'sigeem',
     'user': 'postgres',
-    'password': '',
+    'password': '123',
     'port': 5432
 }
 
