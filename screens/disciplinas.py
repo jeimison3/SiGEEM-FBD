@@ -8,23 +8,20 @@ class DisciplinasScreen:
         self.root = root
         self.username = username
         
-        # Definição de Cores 
-        self.color_header = '#2c3e50'  # Azul Escuro
-        self.color_toolbar = '#3D3D3D' # Cinza Escuro
-        self.color_bg = '#3D3D3D'      # Fundo das laterais
+        self.color_header = '#2c3e50'
+        self.color_toolbar = '#3D3D3D'
+        self.color_bg = '#3D3D3D'
         
-        # Container Principal 
         self.main_container = tk.Frame(root, bg=self.color_bg)
         self.main_container.pack(fill='both', expand=True)
         self.header = tk.Frame(self.main_container, bg=self.color_header, height=60)
         self.header.pack(fill='x')
         self.create_header_widgets()
+        
         self.toolbar = tk.Frame(self.main_container, bg=self.color_toolbar, pady=15)
         self.toolbar.pack(fill='x')
         self.create_toolbar_widgets()
 
-        # --- ÁREA DA TABELA
-        
         self.table_frame = tk.Frame(self.main_container, bg='white')
         self.table_frame.place(relx=0.5, rely=0.62, relwidth=0.94, relheight=0.68, anchor='center')
         
@@ -116,15 +113,15 @@ class DisciplinasScreen:
 
         session = DatabaseConnection.get_session()
         professores = session.query(Professor).all()
-        self.combo_prof['values'] = [f"{p.id} - {p.nome}" for p in professores]
+        self.combo_prof['values'] = [f"{p.id_professor} - {p.nome_completo}" for p in professores]
 
         if disciplina_id:
             d = session.query(Disciplina).get(disciplina_id)
             if d:
-                self.ent_nome.insert(0, d.nome)
+                self.ent_nome.insert(0, d.nome_disciplina)
                 self.ent_carga.insert(0, d.carga_horaria)
                 if d.professor:
-                    self.combo_prof.set(f"{d.professor.id} - {d.professor.nome}")
+                    self.combo_prof.set(f"{d.professor.id_professor} - {d.professor.nome_completo}")
             
             txt_btn, cor_btn = "Salvar Alterações", "#FF9800"
             cmd = lambda: self.salvar_no_banco(disciplina_id)
@@ -145,6 +142,13 @@ class DisciplinasScreen:
         if not nome or not carga:
             messagebox.showwarning("Atenção", "Preencha os campos obrigatórios!")
             return
+        
+       
+        try:
+            carga_final = int(carga)
+        except ValueError:
+            messagebox.showerror("Erro", "Carga Horária deve ser um número inteiro!")
+            return
 
         session = DatabaseConnection.get_session()
         try:
@@ -152,9 +156,9 @@ class DisciplinasScreen:
             
             if disciplina_id:
                 d = session.query(Disciplina).get(disciplina_id)
-                d.nome, d.carga_horaria, d.professor_id = nome, int(carga), prof_id
+                d.nome_disciplina, d.carga_horaria, d.id_professor = nome, int(carga), prof_id
             else:
-                session.add(Disciplina(nome=nome, carga_horaria=int(carga), professor_id=prof_id))
+                session.add(Disciplina(nome_disciplina=nome, carga_horaria=int(carga), id_professor=prof_id))
             
             session.commit()
             messagebox.showinfo("Sucesso", "Operação realizada!")
@@ -171,8 +175,8 @@ class DisciplinasScreen:
         session = DatabaseConnection.get_session()
         try:
             for d in session.query(Disciplina).all():
-                nome_prof = d.professor.nome if d.professor else "Não atribuído"
-                self.tree.insert('', 'end', values=(d.id, d.nome, d.carga_horaria, nome_prof))
+                nome_prof = d.professor.nome_completo if d.professor else "Não atribuído"
+                self.tree.insert('', 'end', values=(d.id_disciplina, d.nome_disciplina, d.carga_horaria, nome_prof))
         finally:
             session.close()
 

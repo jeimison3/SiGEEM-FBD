@@ -1,97 +1,77 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from database.connection import Base
 
+prof_habilitado = Table(
+    'prof_habilitado', Base.metadata,
+    Column('id_professor', Integer, ForeignKey('professor.id_professor'), primary_key=True),
+    Column('id_disciplina', Integer, ForeignKey('disciplina.id_disciplina'), primary_key=True)
+)
+
 class Usuario(Base):
-    __tablename__ = 'usuarios'
-    id = Column(Integer, primary_key=True)
+    __tablename__ = 'usuario'
+    
+    id_usuario = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     nome = Column(String(100))
 
 class Turma(Base):
     __tablename__ = 'turmas'
+    
     id = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
     ano = Column(Integer)
     turno = Column(String(20))
-    
-    # Relacionamentos
-    alunos = relationship("Aluno", back_populates="turma")
-    aulas = relationship("Aula", back_populates="turma")
 
 class Aluno(Base):
     __tablename__ = 'alunos'
+    
     id = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
     cpf = Column(String(14))
     data_nascimento = Column(Date)
     turma_id = Column(Integer, ForeignKey('turmas.id'))
-    
-    # Relacionamentos
-    turma = relationship("Turma", back_populates="alunos")
-    notas = relationship("Nota", back_populates="aluno")
-    frequencias = relationship("Frequencia", back_populates="aluno")
 
 class Professor(Base):
-    __tablename__ = 'professores'
-    id = Column(Integer, primary_key=True)
-    nome = Column(String(100), nullable=False)
-    cpf = Column(String(14))
-    especialidade = Column(String(100))
-    
-    # Relacionamentos
-    disciplinas = relationship("Disciplina", back_populates="professor")
-    aulas = relationship("Aula", back_populates="professor")
+    __tablename__ = 'professor'
+
+    id_professor = Column(Integer, primary_key=True)
+    nome_completo = Column(String(100), nullable=False)
+    data_nascimento = Column(Date, nullable=False)
+    telefone = Column(String(20), nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    area_formacao = Column(String(100), nullable=False)
+    id_usuario = Column(Integer, ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
+
+    usuario = relationship("Usuario")
+    # Versão Correta:
+    disciplinas_habilitadas = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
 
 class Disciplina(Base):
-    __tablename__ = 'disciplinas'
-    id = Column(Integer, primary_key=True)
-    nome = Column(String(100), nullable=False)
-    carga_horaria = Column(Integer)
-    professor_id = Column(Integer, ForeignKey('professores.id'))
-    
-    # Relacionamentos
-    professor = relationship("Professor", back_populates="disciplinas")
-    aulas = relationship("Aula", back_populates="disciplina")
-    notas = relationship("Nota", back_populates="disciplina")
+    __tablename__ = 'disciplina'
 
-class Aula(Base):
-    """Implementação do RF07 - Cadastro de Aula"""
-    __tablename__ = 'aulas'
-    
-    id = Column(Integer, primary_key=True)
-    professor_id = Column(Integer, ForeignKey('professores.id'), nullable=False)
-    turma_id = Column(Integer, ForeignKey('turmas.id'), nullable=False)
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'), nullable=False)
-    data_aula = Column(Date, nullable=False)
-    hora_inicio = Column(String(5), nullable=False) 
-    hora_fim = Column(String(5), nullable=False)
+    id_disciplina = Column(Integer, primary_key=True)
+    nome_disciplina = Column(String(100))
+    carga_horaria = Column(Integer, nullable=False)
+    obrigatoriedade = Column(Boolean, default=True)
+    ativa = Column(Boolean, default=True)
+    prerequisito = Column(Integer, ForeignKey('disciplina.id_disciplina'))
 
-    # Relacionamentos para busca de nomes e validação de regras de negócio
-    professor = relationship("Professor", back_populates="aulas")
-    turma = relationship("Turma", back_populates="aulas")
-    disciplina = relationship("Disciplina", back_populates="aulas")
+    professores = relationship(
+    "Professor", 
+    secondary=prof_habilitado, 
+    back_populates="disciplinas_habilitadas",
+    overlaps="disciplinas_habilitadas"
+)
 
 class Nota(Base):
-    """Implementação do RF08 - Cadastro de Notas"""
-    __tablename__ = 'notas'
-    id = Column(Integer, primary_key=True)
-    aluno_id = Column(Integer, ForeignKey('alunos.id'))
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
+    __tablename__ = 'Nota'
+    
+    id_turma = Column(Integer, ForeignKey('turma.id_turma'), primary_key=True)
+    id_aluno = Column(Integer, ForeignKey('aluno.id_aluno'), primary_key=True)
+    id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), primary_key=True)
+    id_professor = Column(Integer, ForeignKey('professor.id_professor'), primary_key=True)
+    id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
-    bimestre = Column(Integer)
-    
-    aluno = relationship("Aluno", back_populates="notas")
-    disciplina = relationship("Disciplina", back_populates="notas")
-
-class Frequencia(Base):
-    """Implementação do RF09 - Cadastro de Frequência"""
-    __tablename__ = 'frequencias'
-    id = Column(Integer, primary_key=True)
-    aluno_id = Column(Integer, ForeignKey('alunos.id'))
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
-    data = Column(Date)
-    presente = Column(Integer) # 1 para presente, 0 para ausente
-    
-    aluno = relationship("Aluno", back_populates="frequencias")
+    peso = Column(Float)

@@ -50,7 +50,6 @@ class DashboardScreen:
             ("Alunos", self.abrir_alunos, '#2196F3'),
             ("Professores", self.abrir_professores, '#FF9800'),
             ("Disciplinas", self.abrir_disciplinas, '#9C27B0'),
-            ("Agendar Aulas", self.abrir_aulas, '#3F51B5'), # RF07
         ]
         
         for i, (text, command, color) in enumerate(buttons):
@@ -61,8 +60,6 @@ class DashboardScreen:
                           bg=color, fg='white', width=18, height=3,
                           command=command, cursor='hand2', relief='flat')
             btn.grid(row=row, column=col, padx=15, pady=15)
-
-    #Métodos de Navegação com Importação Local
     
     def abrir_turmas(self):
         self.frame.destroy()
@@ -83,11 +80,6 @@ class DashboardScreen:
         self.frame.destroy()
         from screens.disciplinas import DisciplinasScreen
         DisciplinasScreen(self.root, self.username)
-
-    def abrir_aulas(self):
-        self.frame.destroy()
-        from screens.aulas import AulasScreen
-        AulasScreen(self.root, self.username)
     
     def logout(self):
         from screens.login import LoginScreen

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from database.connection import DatabaseConnection
-from database.models import Professor
+from database.models import Professor, Usuario
 
 class ProfessoresScreen:
     def __init__(self, root, username):
@@ -121,9 +121,9 @@ class ProfessoresScreen:
             session = DatabaseConnection.get_session()
             p = session.query(Professor).get(professor_id)
             if p:
-                self.ent_nome.insert(0, p.nome)
-                self.ent_cpf.insert(0, p.cpf)
-                self.ent_esp.insert(0, p.especialidade if p.especialidade else "")
+                self.ent_nome.insert(0, p.nome_completo)
+                self.ent_cpf.insert(0, p.usuario.cpf if p.usuario else "")
+                self.ent_esp.insert(0, p.area_formacao if p.area_formacao else "")
             session.close()
             txt_btn, cor_btn = "Salvar Alterações", "#FF9800"
             cmd = lambda: self.salvar_no_banco(professor_id)
@@ -135,8 +135,21 @@ class ProfessoresScreen:
                  font=('Arial', 12, 'bold'), command=cmd, 
                  cursor="hand2", height=2, relief='flat').pack(fill="x")
 
+    def carregar_dados(self):
+        for item in self.tree.get_children(): self.tree.delete(item)
+        session = DatabaseConnection.get_session()
+        try:
+            for p in session.query(Professor).all():
+                cpf_val = p.usuario.cpf if p.usuario else "N/A"
+                self.tree.insert('', 'end', values=(p.id_professor, p.nome_completo, cpf_val, p.area_formacao))
+        finally:
+            session.close()
+
     def salvar_no_banco(self, professor_id=None):
-        nome, cpf, esp = self.ent_nome.get(), self.ent_cpf.get(), self.ent_esp.get()
+        nome = self.ent_nome.get()
+        cpf = self.ent_cpf.get()
+        esp = self.ent_esp.get()
+        
         if not nome or not cpf:
             messagebox.showwarning("Atenção", "Preencha os campos obrigatórios!")
             return
@@ -145,9 +158,25 @@ class ProfessoresScreen:
         try:
             if professor_id:
                 p = session.query(Professor).get(professor_id)
-                p.nome, p.cpf, p.especialidade = nome, cpf, esp
+                p.nome_completo = nome
+                p.area_formacao = esp
+                if p.usuario: p.usuario.cpf = cpf
             else:
-                session.add(Professor(nome=nome, cpf=cpf, especialidade=esp))
+                novo_usuario =Usuario(cpf=cpf, senha="123") 
+                session.add(novo_usuario)
+                session.flush()
+
+                # Criar o Professor vinculado ao usuário
+                novo_prof = Professor(
+                    nome_completo=nome, 
+                    area_formacao=esp, 
+                    id_usuario=novo_usuario.id_usuario,
+                    data_nascimento="2000-01-01", # Campo obrigatório no seu SQL
+                    telefone="0000-0000",          # Campo obrigatório no seu SQL
+                    email=f"{nome.lower().replace(' ', '.')}@escola.com"
+                )
+                session.add(novo_prof)
+
             session.commit()
             messagebox.showinfo("Sucesso", "Operação realizada!")
             self.janela_form.destroy()
@@ -155,15 +184,6 @@ class ProfessoresScreen:
         except Exception as e:
             session.rollback()
             messagebox.showerror("Erro", f"Erro: {e}")
-        finally:
-            session.close()
-
-    def carregar_dados(self):
-        for item in self.tree.get_children(): self.tree.delete(item)
-        session = DatabaseConnection.get_session()
-        try:
-            for p in session.query(Professor).all():
-                self.tree.insert('', 'end', values=(p.id, p.nome, p.cpf, p.especialidade))
         finally:
             session.close()
 
