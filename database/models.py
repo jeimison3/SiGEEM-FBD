@@ -53,3 +53,15 @@ class Nota(Base):
     id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
     peso = Column(Float)
+    
+class Avaliacao(Base):
+    __tablename__ = 'Avaliacao'
+    
+    id_avaliacao = Column(Integer, primary_key=True)
+    nome_avaliacao = Column(String(100))
+    data_avaliacao = Column(Date)
+    quanto_vale = Column(Float)
+    peso = Column(Float)
+    id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), nullable=False)
+    id_turma = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
+    id_professor = Column(Integer, ForeignKey('professor.id_professor'), nullable=False)
