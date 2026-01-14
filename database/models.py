@@ -19,13 +19,13 @@ class Turma(Base):
     turno = Column(String(20))
 
 class Aluno(Base):
-    __tablename__ = 'alunos'
-    
-    id = Column(Integer, primary_key=True)
+    __tablename__ = 'Aluno'
+
+    id_aluno = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
-    cpf = Column(String(14))
-    data_nascimento = Column(Date)
-    turma_id = Column(Integer, ForeignKey('turmas.id'))
+    cpf = Column(String(14), nullable=False)
+    data_nascimento = Column(Date, nullable=False)
+    id_turma = Column(Integer, ForeignKey('Turma.id_turma'))
 
 class Professor(Base):
     __tablename__ = 'professores'
