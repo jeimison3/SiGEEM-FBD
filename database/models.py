@@ -74,9 +74,10 @@ class Frequencia(Base):
     presente = Column(Integer)  # 1 para presente, 0 para ausente
 
 class Coordenador(Base):
-    __tablename__ = 'Coordenador'
+    __tablename__ = 'coordenador'
 
     id_coordenador = Column(Integer, primary_key=True)
-    nome = Column(String(100), nullable=False)
-    cpf = Column(String(14), nullable=False)
+    nome_completo = Column(String(100), nullable=False)
+    data_nascimento = Column(Date, nullable=False)
+    cpf = Column(String(14), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
