@@ -113,7 +113,7 @@ class NotasScreen:
                 #     if avaliacao:
                 #         avali_nome = avaliacao.nome_avaliacao
                 
-                # data_nasc = aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else ''
+                data_nasc = aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else ''
                 
                 self.tree.insert('', 'end', values=(
                     turma_nome,
