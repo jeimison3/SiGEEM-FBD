@@ -20,6 +20,9 @@ class Usuario(Base):
     id_usuario = Column(Integer, primary_key=True)
     cpf = Column(String(14), unique=True, nullable=False)
     senha = Column(String(128), nullable=False)
+    aluno: Mapped["Aluno"] = relationship(back_populates="usuario")
+    professor: Mapped["Professor"] = relationship(back_populates="usuario")
+    coordenador: Mapped["Coordenador"] = relationship(back_populates="usuario")
 
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
@@ -35,13 +38,8 @@ class Aluno(Base):
     telefone_responsavel = Column(String(20), nullable=False)
     ano_letivo = Column(Integer)
     email = Column(String(100), unique=True)
-    id_usuario = Column(
-        Integer,
-        ForeignKey('usuario.id_usuario'),
-        unique=True,
-        nullable=False
-    )
-    usuario = relationship("Usuario", foreign_keys=[id_usuario])
+    id_usuario = Column(Integer, ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
+    usuario: Mapped["Usuario"] = relationship("Usuario", foreign_keys=[id_usuario], back_populates="aluno")
     notas: Mapped[List["Nota"]] = relationship(back_populates="aluno")
 
 
@@ -56,7 +54,7 @@ class Professor(Base):
     area_formacao = Column(String(100), nullable=False)
     id_usuario = Column(Integer, ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
 
-    usuario = relationship("Usuario", foreign_keys=[id_usuario])
+    usuario: Mapped["Usuario"] = relationship("Usuario", foreign_keys=[id_usuario], back_populates="professor")
     # Versão Correta:
     disciplinas_habilitadas: Mapped[List["Disciplina"]] = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
     notas: Mapped[List["Nota"]] = relationship(back_populates="professor")
@@ -114,5 +112,7 @@ class Coordenador(Base):
     id_coordenador = Column(Integer, primary_key=True)
     nome_completo = Column(String(100), nullable=False)
     data_nascimento = Column(Date, nullable=False)
-    cpf = Column(String(14), unique=True, nullable=False)
+    telefone = Column(String(20), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
+    id_usuario = Column(Integer, ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
+    usuario: Mapped["Usuario"] = relationship("Usuario", foreign_keys=[id_usuario], back_populates="coordenador")
