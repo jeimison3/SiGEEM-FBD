@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-class TurmasScreen:
+class ProfessoresScreen:
     def __init__(self, root, username):
         self.root = root
         self.username = username
@@ -14,15 +14,15 @@ class TurmasScreen:
     
     def create_widgets(self):
         # Header
-        header = tk.Frame(self.frame, bg='#4CAF50', height=60)
+        header = tk.Frame(self.frame, bg='#FF9800', height=60)
         header.pack(fill='x')
         
-        tk.Label(header, text="Gerenciamento de Turmas", 
-                font=('Arial', 16, 'bold'), bg='#4CAF50', 
+        tk.Label(header, text="Gerenciamento de Professores", 
+                font=('Arial', 16, 'bold'), bg='#FF9800', 
                 fg='white').pack(side='left', padx=20, pady=15)
         
         back_btn = tk.Button(header, text="← Voltar", font=('Arial', 10),
-                            bg='#2E7D32', fg='white', 
+                            bg='#F57C00', fg='white', 
                             command=self.voltar, cursor='hand2', padx=15)
         back_btn.pack(side='right', padx=20)
         
@@ -49,26 +49,25 @@ class TurmasScreen:
         scrollbar = ttk.Scrollbar(tree_frame)
         scrollbar.pack(side='right', fill='y')
         
-        self.tree = ttk.Treeview(tree_frame, columns=('ID', 'Nome', 'Ano', 'Turno'),
+        self.tree = ttk.Treeview(tree_frame, columns=('ID', 'Nome', 'CPF', 'Especialidade'),
                                 show='headings', yscrollcommand=scrollbar.set)
         
         self.tree.heading('ID', text='ID')
         self.tree.heading('Nome', text='Nome')
-        self.tree.heading('Ano', text='Ano')
-        self.tree.heading('Turno', text='Turno')
+        self.tree.heading('CPF', text='CPF')
+        self.tree.heading('Especialidade', text='Especialidade')
         
         self.tree.column('ID', width=50)
         self.tree.column('Nome', width=250)
-        self.tree.column('Ano', width=100)
-        self.tree.column('Turno', width=150)
+        self.tree.column('CPF', width=150)
+        self.tree.column('Especialidade', width=200)
         
         self.tree.pack(side='left', fill='both', expand=True)
         scrollbar.config(command=self.tree.yview)
     
     def carregar_dados(self):
         """TODO: Implementar carregamento de dados do banco"""
-        self.tree.insert('', 'end', values=(1, '1º Ano A', 2024, 'Manhã'))
-        self.tree.insert('', 'end', values=(2, '2º Ano B', 2024, 'Tarde'))
+        self.tree.insert('', 'end', values=(1, 'Maria Santos', '987.654.321-00', 'Matemática'))
     
     def novo(self):
         """TODO: Implementar inserção no banco de dados"""
@@ -78,7 +77,7 @@ class TurmasScreen:
         """TODO: Implementar edição no banco de dados"""
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Aviso", "Selecione uma turma para editar!")
+            messagebox.showwarning("Aviso", "Selecione um professor para editar!")
             return
         messagebox.showinfo("Info", "Função EDITAR - Implementar atualização no banco")
     
@@ -86,7 +85,7 @@ class TurmasScreen:
         """TODO: Implementar remoção do banco de dados"""
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Aviso", "Selecione uma turma para remover!")
+            messagebox.showwarning("Aviso", "Selecione um professor para remover!")
             return
         messagebox.showinfo("Info", "Função REMOVER - Implementar exclusão do banco")
     
@@ -95,4 +94,3 @@ class TurmasScreen:
         # IMPORTAÇÃO LOCAL
         from screens.dashboard import DashboardScreen
         DashboardScreen(self.root, self.username)
-
