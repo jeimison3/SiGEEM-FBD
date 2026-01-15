@@ -75,7 +75,7 @@ class NotasScreen:
     
     def carregar_dados(self):
         from database.connection import DatabaseConnection
-        from database.models import Aluno, Turma, Nota, Disciplina, Professor
+        from database.models import Aluno, Turma, Nota, Disciplina, Professor, Avaliacao
         
         session = DatabaseConnection.get_session()
         try:
@@ -108,19 +108,19 @@ class NotasScreen:
                     professor = session.query(Professor).filter_by(id_professor=nota.id_professor).first()
                     if turma:
                         profe_nome = professor.nome_completo
-                # if nota.id_avaliacao:
-                #     avaliacao = session.query(Avaliacao).filter_by(id_avaliacao=nota.id_avaliacao).first()
-                #     if avaliacao:
-                #         avali_nome = avaliacao.nome_avaliacao
+                if nota.id_avaliacao:
+                    avaliacao = session.query(Avaliacao).filter_by(id_avaliacao=nota.id_avaliacao).first()
+                    if avaliacao:
+                        avali_nome = avaliacao.nome_avaliacao
                 
-                data_nasc = aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else ''
+                # data_nasc = aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else ''
                 
                 self.tree.insert('', 'end', values=(
                     turma_nome,
                     aluno_nome,
                     disci_nome,
                     profe_nome,
-                    # avali_nome,
+                    avali_nome,
                     nota.nota
                 ))
         finally:
