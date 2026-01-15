@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from database.connection import Base
+from typing import List
 
 prof_habilitado = Table(
     'prof_habilitado', Base.metadata,
@@ -12,27 +13,20 @@ class Turma(Base):
     id_turma = Column(Integer, primary_key=True)
     nome = Column(String(50), nullable=False)
     sala = Column(String(10))
-
-class Avaliacao(Base):
-    __tablename__ = 'avaliacoes'
-    id = Column(Integer, primary_key=True)
-    nome = Column(String(100), nullable=False)
-    turma_id = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
+    notas: Mapped[List["Nota"]] = relationship(back_populates="turma")
 
 class Usuario(Base):
     __tablename__ = 'usuario'
-    
     id_usuario = Column(Integer, primary_key=True)
-    username = Column(String(50), unique=True, nullable=False)
-    password = Column(String(255), nullable=False)
-    nome = Column(String(100))
+    cpf = Column(String(14), unique=True, nullable=False)
+    senha = Column(String(128), nullable=False)
 
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from database.connection import Base
 
 class Aluno(Base):
-    __tablename__ = 'Aluno'
+    __tablename__ = 'aluno'
 
     id_aluno = Column(Integer, primary_key=True)
     matricula = Column(String(20), unique=True)
@@ -43,10 +37,12 @@ class Aluno(Base):
     email = Column(String(100), unique=True)
     id_usuario = Column(
         Integer,
-        ForeignKey('Usuario.id_usuario'),
+        ForeignKey('usuario.id_usuario'),
         unique=True,
         nullable=False
     )
+    usuario = relationship("Usuario", foreign_keys=[id_usuario])
+    notas: Mapped[List["Nota"]] = relationship(back_populates="aluno")
 
 
 class Professor(Base):
@@ -60,9 +56,10 @@ class Professor(Base):
     area_formacao = Column(String(100), nullable=False)
     id_usuario = Column(Integer, ForeignKey('usuario.id_usuario'), unique=True, nullable=False)
 
-    usuario = relationship("Usuario")
+    usuario = relationship("Usuario", foreign_keys=[id_usuario])
     # Versão Correta:
-    disciplinas_habilitadas = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
+    disciplinas_habilitadas: Mapped[List["Disciplina"]] = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
+    notas: Mapped[List["Nota"]] = relationship(back_populates="professor")
 
 class Disciplina(Base):
     __tablename__ = 'disciplina'
@@ -74,15 +71,16 @@ class Disciplina(Base):
     ativa = Column(Boolean, default=True)
     prerequisito = Column(Integer, ForeignKey('disciplina.id_disciplina'))
 
-    professores = relationship(
-    "Professor", 
-    secondary=prof_habilitado, 
-    back_populates="disciplinas_habilitadas",
-    overlaps="disciplinas_habilitadas"
-)
+    professores: Mapped[List["Professor"]] = relationship(
+        "Professor", 
+        secondary=prof_habilitado, 
+        back_populates="disciplinas_habilitadas",
+        overlaps="disciplinas_habilitadas"
+    )
+    notas: Mapped[List["Nota"]] = relationship(back_populates="disciplina")
 
 class Nota(Base):
-    __tablename__ = 'Nota'
+    __tablename__ = 'nota'
     
     id_turma = Column(Integer, ForeignKey('turma.id_turma'), primary_key=True)
     id_aluno = Column(Integer, ForeignKey('aluno.id_aluno'), primary_key=True)
@@ -91,23 +89,24 @@ class Nota(Base):
     id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
     peso = Column(Float)
+    turma: Mapped["Turma"] = relationship("Turma", foreign_keys=[id_turma], back_populates="notas")
+    aluno: Mapped["Aluno"] = relationship("Aluno", foreign_keys=[id_aluno], back_populates="notas")
+    disciplina: Mapped["Disciplina"] = relationship("Disciplina", foreign_keys=[id_disciplina], back_populates="notas")
+    professor: Mapped["Professor"] = relationship("Professor", foreign_keys=[id_professor], back_populates="notas")
+    avaliacao: Mapped["Avaliacao"] = relationship("Avaliacao", foreign_keys=[id_avaliacao], back_populates="notas")
     
 class Avaliacao(Base):
-    __tablename__ = 'Avaliacao'
+    __tablename__ = 'avaliacao'
     
     id_avaliacao = Column(Integer, primary_key=True)
     nome_avaliacao = Column(String(100))
-    data_avaliacao = Column(Date)
+    data_aplicacao = Column(Date)
     quanto_vale = Column(Float)
     peso = Column(Float)
     id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), nullable=False)
     id_turma = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
     id_professor = Column(Integer, ForeignKey('professor.id_professor'), nullable=False)
-    id = Column(Integer, primary_key=True)
-    aluno_id = Column(Integer, ForeignKey('alunos.id'))
-    disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
-    data = Column(Date)
-    presente = Column(Integer)  # 1 para presente, 0 para ausente
+    notas: Mapped[List["Nota"]] = relationship(back_populates="avaliacao")
 
 class Coordenador(Base):
     __tablename__ = 'coordenador'
