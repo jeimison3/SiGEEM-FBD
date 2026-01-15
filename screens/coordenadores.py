@@ -4,12 +4,17 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import datetime
+
+from database.connection import SessionLocal
+from database.models import Coordenador, Usuario
 
 
 class CoordenadoresScreen:
     def __init__(self, root, username):
         self.root = root
         self.username = username
+        self.db = SessionLocal()
 
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
@@ -21,7 +26,6 @@ class CoordenadoresScreen:
     # INTERFACE
     # ---------------------------------------------------------
     def create_widgets(self):
-        # Header
         header = tk.Frame(self.frame, bg='#673AB7', height=60)
         header.pack(fill='x')
 
@@ -42,20 +46,13 @@ class CoordenadoresScreen:
             padx=15
         ).pack(side='right', padx=20)
 
-        # Botões
         btn_frame = tk.Frame(self.frame, bg='#f0f0f0')
         btn_frame.pack(pady=20)
 
-        tk.Button(btn_frame, text="Novo", width=12, command=self.novo)\
-            .grid(row=0, column=0, padx=5)
+        tk.Button(btn_frame, text="Novo", width=12, command=self.novo).grid(row=0, column=0, padx=5)
+        tk.Button(btn_frame, text="Editar", width=12, command=self.editar).grid(row=0, column=1, padx=5)
+        tk.Button(btn_frame, text="Remover", width=12, command=self.remover).grid(row=0, column=2, padx=5)
 
-        tk.Button(btn_frame, text="Editar", width=12, command=self.editar)\
-            .grid(row=0, column=1, padx=5)
-
-        tk.Button(btn_frame, text="Remover", width=12, command=self.remover)\
-            .grid(row=0, column=2, padx=5)
-
-        # Tabela
         tree_frame = tk.Frame(self.frame)
         tree_frame.pack(padx=20, pady=10, fill='both', expand=True)
 
@@ -65,10 +62,8 @@ class CoordenadoresScreen:
             show='headings'
         )
 
-        self.tree.heading('ID', text='ID')
-        self.tree.heading('Nome', text='Nome')
-        self.tree.heading('CPF', text='CPF')
-        self.tree.heading('Email', text='Email')
+        for col in ('ID', 'Nome', 'CPF', 'Email'):
+            self.tree.heading(col, text=col)
 
         self.tree.column('ID', width=60)
         self.tree.column('Nome', width=220)
@@ -78,11 +73,19 @@ class CoordenadoresScreen:
         self.tree.pack(fill='both', expand=True)
 
     # ---------------------------------------------------------
-    # DADOS DE EXEMPLO
+    # CARREGAR DO BANCO
     # ---------------------------------------------------------
     def carregar_dados(self):
-        self.tree.insert('', 'end', values=(1, 'Ana Paula', '123.456.789-00', 'ana@email.com'))
-        self.tree.insert('', 'end', values=(2, 'Carlos Eduardo', '987.654.321-00', 'carlos@email.com'))
+        self.tree.delete(*self.tree.get_children())
+
+        coordenadores = self.db.query(Coordenador).all()
+        for c in coordenadores:
+            self.tree.insert('', 'end', values=(
+                c.id_coordenador,
+                c.nome_completo,
+                c.usuario.cpf,
+                c.email
+            ))
 
     # ---------------------------------------------------------
     # NOVO
@@ -95,114 +98,125 @@ class CoordenadoresScreen:
     # ---------------------------------------------------------
     def editar(self):
         selecionado = self.tree.selection()
-
         if not selecionado:
             messagebox.showwarning("Aviso", "Selecione um coordenador!")
             return
 
         item = self.tree.item(selecionado[0])
-        _, nome, cpf, email = item['values']
+        id_coordenador = item["values"][0]
 
-        self.abrir_formulario(
-            item_id=selecionado[0],
-            nome_atual=nome,
-            cpf_atual=cpf,
-            email_atual=email
-        )
+        coord = self.db.query(Coordenador).get(id_coordenador)
+        self.abrir_formulario(coord)
 
     # ---------------------------------------------------------
     # REMOVER
     # ---------------------------------------------------------
     def remover(self):
         selecionado = self.tree.selection()
-
         if not selecionado:
             messagebox.showwarning("Aviso", "Selecione um coordenador!")
             return
 
-        confirmar = messagebox.askyesno(
-            "Confirmar",
-            "Deseja realmente remover o coordenador?"
-        )
+        if not messagebox.askyesno("Confirmar", "Deseja remover o coordenador?"):
+            return
 
-        if confirmar:
-            self.tree.delete(selecionado[0])
+        item = self.tree.item(selecionado[0])
+        id_coordenador = item["values"][0]
+
+        coord = self.db.query(Coordenador).get(id_coordenador)
+
+        self.db.delete(coord.usuario)
+        self.db.delete(coord)
+        self.db.commit()
+
+        self.carregar_dados()
 
     # ---------------------------------------------------------
-    # FORMULÁRIO (NOVO E EDITAR)
+    # FORMULÁRIO
     # ---------------------------------------------------------
-    def abrir_formulario(self, item_id=None, nome_atual="", cpf_atual="", email_atual=""):
+    def abrir_formulario(self, coordenador=None):
         dialog = tk.Toplevel(self.root)
         dialog.title("Coordenador")
-        dialog.geometry("400x360")
+        dialog.geometry("420x420")
         dialog.transient(self.root)
         dialog.grab_set()
 
         frame = tk.Frame(dialog, padx=20, pady=20)
         frame.pack(fill='both', expand=True)
 
-        titulo = "Editar Coordenador" if item_id else "Novo Coordenador"
+        def campo(label):
+            tk.Label(frame, text=label).pack(anchor='w')
+            e = tk.Entry(frame, width=40)
+            e.pack(pady=5)
+            return e
 
-        tk.Label(
-            frame,
-            text=titulo,
-            font=('Arial', 14, 'bold')
-        ).pack(pady=10)
+        nome_entry = campo("Nome completo")
+        nasc_entry = campo("Data nascimento (YYYY-MM-DD)")
+        tel_entry = campo("Telefone")
+        email_entry = campo("Email")
+        cpf_entry = campo("CPF")
+        senha_entry = campo("Senha")
 
-        # Nome
-        tk.Label(frame, text="Nome completo:").pack(anchor='w')
-        nome_entry = tk.Entry(frame, width=35)
-        nome_entry.insert(0, nome_atual)
-        nome_entry.pack(pady=5)
-
-        # CPF
-        tk.Label(frame, text="CPF:").pack(anchor='w')
-        cpf_entry = tk.Entry(frame, width=35)
-        cpf_entry.insert(0, cpf_atual)
-        cpf_entry.pack(pady=5)
-
-        # Email
-        tk.Label(frame, text="Email:").pack(anchor='w')
-        email_entry = tk.Entry(frame, width=35)
-        email_entry.insert(0, email_atual)
-        email_entry.pack(pady=5)
+        if coordenador:
+            nome_entry.insert(0, coordenador.nome_completo)
+            nasc_entry.insert(0, coordenador.data_nascimento.strftime("%Y-%m-%d"))
+            tel_entry.insert(0, coordenador.telefone)
+            email_entry.insert(0, coordenador.email)
+            cpf_entry.insert(0, coordenador.usuario.cpf)
 
         def salvar():
-            nome = nome_entry.get().strip()
-            cpf = cpf_entry.get().strip()
-            email = email_entry.get().strip()
+            try:
+                nome = nome_entry.get().strip()
+                cpf = cpf_entry.get().strip()
+                email = email_entry.get().strip()
 
-            if not nome or not cpf or not email:
-                messagebox.showerror("Erro", "Preencha todos os campos!")
-                return
+                if not nome or not cpf or not email:
+                    messagebox.showerror("Erro", "Preencha todos os campos!")
+                    return
 
-            if item_id:
-                self.tree.item(
-                    item_id,
-                    values=(item_id, nome, cpf, email)
-                )
-            else:
-                novo_id = len(self.tree.get_children()) + 1
-                self.tree.insert(
-                    '',
-                    'end',
-                    values=(novo_id, nome, cpf, email)
-                )
+                if coordenador:
+                    coordenador.nome_completo = nome
+                    coordenador.email = email
+                    coordenador.telefone = tel_entry.get()
+                    coordenador.data_nascimento = datetime.strptime(
+                        nasc_entry.get(), "%Y-%m-%d"
+                    ).date()
+                    coordenador.usuario.cpf = cpf
+                else:
+                    user = Usuario(
+                        cpf=cpf,
+                        senha=senha_entry.get()
+                    )
+                    self.db.add(user)
+                    self.db.flush()
 
-            dialog.destroy()
+                    novo = Coordenador(
+                        nome_completo=nome,
+                        data_nascimento=datetime.strptime(
+                            nasc_entry.get(), "%Y-%m-%d"
+                        ).date(),
+                        telefone=tel_entry.get(),
+                        email=email,
+                        id_usuario=user.id_usuario
+                    )
+                    self.db.add(novo)
 
-        tk.Button(
-            frame,
-            text="Salvar",
-            width=18,
-            command=salvar
-        ).pack(pady=20)
+                self.db.commit()
+                messagebox.showinfo("Sucesso", "Coordenador salvo com sucesso!")
+                dialog.destroy()
+                self.carregar_dados()
+
+            except Exception as e:
+                self.db.rollback()
+                messagebox.showerror("Erro", str(e))
+
+        tk.Button(frame, text="Salvar", width=15, command=salvar).pack(pady=15)
 
     # ---------------------------------------------------------
     # VOLTAR
     # ---------------------------------------------------------
     def voltar(self):
+        self.db.close()
         self.frame.destroy()
         from screens.dashboard import DashboardScreen
         DashboardScreen(self.root, self.username)
-
