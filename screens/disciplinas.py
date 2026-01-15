@@ -74,11 +74,6 @@ class DisciplinasScreen:
         
         scrollbar.config(command=self.tree.yview)
         
-        tk.Button(self.table_frame, text="🗑️ Remover", bg='#F44336', fg='white', width=12,
-                  command=self.remover).pack(side='left', padx=5)
-
-        # Tabela (Treeview)
-        self.tree = ttk.Treeview(self.table_frame, columns=('ID', 'Titulo', 'Turma'), show='headings')
         self.tree.heading('ID', text='ID')
         self.tree.heading('Nome', text='NOME DA DISCIPLINA')
         self.tree.heading('Carga', text='CARGA HORÁRIA')
@@ -180,7 +175,6 @@ class DisciplinasScreen:
         session = DatabaseConnection.get_session()
         try:
             for d in session.query(Disciplina).all():
-                print(d)
                 nome_prof = d.professor.nome_completo if d.professor else "Não atribuído"
                 self.tree.insert('', 'end', values=(d.id_disciplina, d.nome_disciplina, d.carga_horaria, nome_prof))
         finally:
