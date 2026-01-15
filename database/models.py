@@ -4,7 +4,7 @@ from database.connection import Base
 
 class Usuario(Base):
     __tablename__ = 'usuarios'
-    
+
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
@@ -12,7 +12,7 @@ class Usuario(Base):
 
 class Turma(Base):
     __tablename__ = 'turmas'
-    
+
     id = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
     ano = Column(Integer)
@@ -41,7 +41,7 @@ class Aluno(Base):
 
 class Professor(Base):
     __tablename__ = 'professores'
-    
+
     id = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
     cpf = Column(String(14))
@@ -49,7 +49,7 @@ class Professor(Base):
 
 class Disciplina(Base):
     __tablename__ = 'disciplinas'
-    
+
     id = Column(Integer, primary_key=True)
     nome = Column(String(100), nullable=False)
     carga_horaria = Column(Integer)
@@ -57,7 +57,7 @@ class Disciplina(Base):
 
 class Nota(Base):
     __tablename__ = 'notas'
-    
+
     id = Column(Integer, primary_key=True)
     aluno_id = Column(Integer, ForeignKey('alunos.id'))
     disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
@@ -66,7 +66,7 @@ class Nota(Base):
 
 class Frequencia(Base):
     __tablename__ = 'frequencias'
-    
+
     id = Column(Integer, primary_key=True)
     aluno_id = Column(Integer, ForeignKey('alunos.id'))
     disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
@@ -74,9 +74,12 @@ class Frequencia(Base):
     presente = Column(Integer)  # 1 para presente, 0 para ausente
 
 class Coordenador(Base):
+    __tablename__ = 'Coordenador'
     __tablename__ = 'coordenador'
 
     id_coordenador = Column(Integer, primary_key=True)
+    nome = Column(String(100), nullable=False)
+    cpf = Column(String(14), nullable=False)
     nome_completo = Column(String(100), nullable=False)
     data_nascimento = Column(Date, nullable=False)
     cpf = Column(String(14), unique=True, nullable=False)
