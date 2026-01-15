@@ -26,7 +26,7 @@ class DatabaseConnection:
     def get_engine(cls):
         """Retorna a engine do SQLAlchemy"""
         if cls._engine is None:
-            connection_string = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+            connection_string = f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
             cls._engine = create_engine(connection_string, echo=False)
         return cls._engine
     
