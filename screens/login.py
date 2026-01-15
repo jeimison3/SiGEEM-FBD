@@ -65,7 +65,6 @@ class LoginScreen:
         session = DatabaseConnection.get_session()
         
         salt = bcrypt.gensalt()
-        print(bcrypt.hashpw(str(password).encode("utf-8"), salt))
         try:
             usuario_check = session.query(Usuario).filter_by(cpf=cpf).first()
             if usuario_check:
