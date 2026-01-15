@@ -1,12 +1,17 @@
 
 import tkinter as tk
 from tkinter import messagebox
+from database.connection import DatabaseConnection
+from database.models import Usuario, Coordenador, Professor, Aluno
+import bcrypt
 
 class LoginScreen:
     def __init__(self, root):
         self.root = root
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
+        self.role = ""
+        self.nome = ""
         
         self.create_widgets()
     
@@ -39,27 +44,51 @@ class LoginScreen:
                              command=self.fazer_login, cursor='hand2')
         login_btn.grid(row=2, column=0, columnspan=2, pady=20)
         
-        # Bind Enter key
         self.password_entry.bind('<Return>', lambda e: self.fazer_login())
     
     def fazer_login(self):
-        username = self.username_entry.get()
+        cpf = self.username_entry.get()
         password = self.password_entry.get()
         
-        if not username or not password:
+        if not cpf or not password:
             messagebox.showerror("Erro", "Preencha todos os campos!")
             return
-        
-        # TODO: Implementar validação real no banco de dados
-        if self.validar_credenciais(username, password):
+        if self.validar_credenciais(cpf, password):
             self.frame.destroy()
-            # IMPORTAÇÃO LOCAL para evitar circular import
             from screens.dashboard import DashboardScreen
-            DashboardScreen(self.root, username)
+            DashboardScreen(self.root, cpf, [self.role, self.nome])
         else:
             messagebox.showerror("Erro", "Credenciais inválidas!")
     
-    def validar_credenciais(self, username, password):
-        """TODO: Implementar validação de credenciais no banco de dados"""
-        return True
+    def validar_credenciais(self, cpf, password):
+        resultado = False
+        session = DatabaseConnection.get_session()
+        
+        salt = bcrypt.gensalt()
+        print(bcrypt.hashpw(str(password).encode("utf-8"), salt))
+        try:
+            usuario_check = session.query(Usuario).filter_by(cpf=cpf).first()
+            if usuario_check:
+                try:
+                    resultado=bcrypt.checkpw(str(password).encode("utf-8"), str(usuario_check.senha).encode("utf-8"))
+                    if resultado:
+                        coord = session.query(Coordenador).filter_by(id_usuario=usuario_check.id_usuario).first()
+                        profe = session.query(Professor).filter_by(id_usuario=usuario_check.id_usuario).first()
+                        aluno = session.query(Aluno).filter_by(id_usuario=usuario_check.id_usuario).first()
+                        if coord:
+                            self.role = "Coordenador"
+                            self.nome = coord.nome_completo
+                        elif profe:
+                            self.role = "Professor"
+                            self.nome = profe.nome_completo
+                        elif aluno:
+                            self.role = "Aluno"
+                            self.nome = aluno.nome_completo
+                        else:
+                            raise ValueError(f"A credencial não foi devidamente alocada a um tipo de usuário.")
+                except Exception as e:
+                    print(e)
+        finally:
+            session.close()
+        return resultado
 
