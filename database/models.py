@@ -90,11 +90,19 @@ class Nota(Base):
     id_professor = Column(Integer, ForeignKey('professor.id_professor'), primary_key=True)
     id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
-    bimestre = Column(Integer)
-
-class Frequencia(Base):
-    __tablename__ = 'frequencias'
+    peso = Column(Float)
     
+class Avaliacao(Base):
+    __tablename__ = 'Avaliacao'
+    
+    id_avaliacao = Column(Integer, primary_key=True)
+    nome_avaliacao = Column(String(100))
+    data_avaliacao = Column(Date)
+    quanto_vale = Column(Float)
+    peso = Column(Float)
+    id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), nullable=False)
+    id_turma = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
+    id_professor = Column(Integer, ForeignKey('professor.id_professor'), nullable=False)
     id = Column(Integer, primary_key=True)
     aluno_id = Column(Integer, ForeignKey('alunos.id'))
     disciplina_id = Column(Integer, ForeignKey('disciplinas.id'))
