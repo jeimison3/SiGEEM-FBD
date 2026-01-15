@@ -4,9 +4,10 @@ from database.connection import DatabaseConnection
 from database.models import Disciplina, Professor
 
 class DisciplinasScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username, extra):
         self.root = root
         self.username = username
+        self.extra = extra
         
         self.color_header = '#2c3e50'
         self.color_toolbar = '#3D3D3D'
@@ -204,4 +205,4 @@ class DisciplinasScreen:
     def voltar(self):
         self.main_container.destroy()
         from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        DashboardScreen(self.root, self.username, self.extra)

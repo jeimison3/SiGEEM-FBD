@@ -1,9 +1,13 @@
 import tkinter as tk
 
 class DashboardScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, cpf, extra):
         self.root = root
-        self.username = username
+        self.cpf = cpf
+        [role, nome_user] = extra
+        self.extra = extra
+        self.nome = nome_user
+        self.role = role
         
         # Centralização da Janela Principal
         largura_janela = 900
@@ -16,7 +20,7 @@ class DashboardScreen:
         pos_y = (altura_tela // 2) - (altura_janela // 2)
         
         self.root.geometry(f"{largura_janela}x{altura_janela}+{pos_x}+{pos_y}")
-        self.root.title(f"SiGEEM - Painel de Controle ({self.username})")
+        self.root.title(f"SiGEEM - Painel de Controle ({self.nome})")
 
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
@@ -27,7 +31,7 @@ class DashboardScreen:
         header = tk.Frame(self.frame, bg='#2196F3', height=80)
         header.pack(fill='x')
         
-        tk.Label(header, text=f"Bem-vindo, {self.username}!", 
+        tk.Label(header, text=f"Bem-vindo, {self.nome}!", 
                 font=('Arial', 14, 'bold'), bg='#2196F3', fg='white').pack(
                     side='left', padx=20, pady=20)
         
@@ -45,16 +49,24 @@ class DashboardScreen:
         buttons_frame = tk.Frame(self.frame, bg='#f0f0f0')
         buttons_frame.pack(pady=10)
         
-        buttons = [
-            ("Turmas", self.abrir_turmas, '#4CAF50'),
-            ("Alunos", self.abrir_alunos, '#2196F3'),
-            ("Professores", self.abrir_professores, '#FF9800'),
-            ("Disciplinas", self.abrir_disciplinas, '#9C27B0'),
-            ("Notas", self.abrir_notas, '#F44336'),
-            ("Coordenadores", self.abrir_coordenadores, '#673AB7'),
-            # ("Notas", self.abrir_notas, '#F44336'),
-            # ("Frequência", self.abrir_frequencia, '#00BCD4')
-        ]
+        if self.role == "Aluno":
+            buttons = []
+        elif self.role == "Professor":
+            buttons = [
+                ("Turmas", self.abrir_turmas, '#4CAF50'),
+                ("Notas", self.abrir_notas, '#F44336')
+            ]
+        elif self.role == "Coordenador":
+            buttons = [
+                ("Turmas", self.abrir_turmas, '#4CAF50'),
+                ("Alunos", self.abrir_alunos, '#2196F3'),
+                ("Professores", self.abrir_professores, '#FF9800'),
+                ("Disciplinas", self.abrir_disciplinas, '#9C27B0'),
+                ("Notas", self.abrir_notas, '#F44336'),
+                ("Coordenadores", self.abrir_coordenadores, '#673AB7')
+            ]
+        else:
+            raise TypeError("O usuário não deveria estar aqui.")
         
         for i, (text, command, color) in enumerate(buttons):
             row = i // 3
@@ -68,40 +80,40 @@ class DashboardScreen:
     def abrir_turmas(self):
         self.frame.destroy()
         from screens.turmas import TurmasScreen
-        TurmasScreen(self.root, self.username)
+        TurmasScreen(self.root, self.cpf, self.extra)
     
     def abrir_alunos(self):
         self.frame.destroy()
         from screens.alunos import AlunosScreen
-        AlunosScreen(self.root, self.username)
+        AlunosScreen(self.root, self.cpf, self.extra)
 
     def abrir_coordenadores(self):
         self.frame.destroy()
         # IMPORTAÇÃO LOCAL
         from screens.coordenadores import CoordenadoresScreen
-        CoordenadoresScreen(self.root, self.username)
+        CoordenadoresScreen(self.root, self.cpf, self.extra)
     
     def abrir_professores(self):
         self.frame.destroy()
         from screens.professores import ProfessoresScreen
-        ProfessoresScreen(self.root, self.username)
+        ProfessoresScreen(self.root, self.cpf, self.extra)
     
     def abrir_disciplinas(self):
         self.frame.destroy()
         from screens.disciplinas import DisciplinasScreen
-        DisciplinasScreen(self.root, self.username)
+        DisciplinasScreen(self.root, self.cpf, self.extra)
         
     def abrir_notas(self):
         self.frame.destroy()
         # IMPORTAÇÃO LOCAL
         from screens.notas import NotasScreen
-        NotasScreen(self.root, self.username)
+        NotasScreen(self.root, self.cpf, self.extra)
     
     # def abrir_frequencia(self):
     #     self.frame.destroy()
     #     # IMPORTAÇÃO LOCAL
     #     from screens.frequencia import FrequenciaScreen
-    #     FrequenciaScreen(self.root, self.username)
+    #     FrequenciaScreen(self.root, self.cpf)
     
     def logout(self):
         from screens.login import LoginScreen
