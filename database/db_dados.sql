@@ -4,24 +4,24 @@ BEGIN;
 -- USUÁRIOS (18)
 -- =========================
 INSERT INTO Usuario (cpf, senha) VALUES
-('111.111.111-11', 'hash1'),
-('222.222.222-22', 'hash2'),
-('333.333.333-33', 'hash3'),
-('444.444.444-44', 'hash4'),
-('555.555.555-55', 'hash5'),
-('666.666.666-66', 'hash6'),
-('777.777.777-77', 'hash7'),
-('888.888.888-88', 'hash8'),
-('999.999.999-99', 'hash9'),
-('101.101.101-10', 'hash10'),
-('202.202.202-20', 'hash11'),
-('303.303.303-30', 'hash12'),
-('404.404.404-40', 'hash13'),
-('505.505.505-50', 'hash14'),
-('606.606.606-60', 'hash15'),
-('707.707.707-70', 'hash16'),
-('808.808.808-80', 'hash17'),
-('909.909.909-90', 'hash18');
+('111.111.111-11', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('222.222.222-22', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('333.333.333-33', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('444.444.444-44', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'), -- Profe
+('555.555.555-55', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('666.666.666-66', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'), -- Coord
+('777.777.777-77', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('888.888.888-88', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('999.999.999-99', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('101.101.101-10', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('202.202.202-20', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('303.303.303-30', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('404.404.404-40', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('505.505.505-50', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('606.606.606-60', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('707.707.707-70', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'),
+('808.808.808-80', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'), -- Coord
+('909.909.909-90', '$2b$12$wlBIsQ6weG.ilwa0eBD/POsCf4XzxmVo3JZExWqslpH6pXtb8VUSy'); -- Coord
 
 -- =========================
 -- ALUNOS (9)

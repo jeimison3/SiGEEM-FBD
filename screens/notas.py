@@ -4,583 +4,368 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-from datetime import datetime
+
+from database.connection import DatabaseConnection
+from database.models import Nota, Turma, Aluno, Disciplina, Professor, Avaliacao
+
 
 class NotasScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username, extra):
         self.root = root
         self.username = username
-        self.frame = tk.Frame(root, bg='#f0f0f0')
-        self.frame.pack(fill='both', expand=True)
-        
+        self.extra = extra
+        self.frame = tk.Frame(root, bg="#f0f0f0")
+        self.frame.pack(fill="both", expand=True)
+
+        self._last_rows = {}
+
         self.create_widgets()
         self.carregar_dados()
-    
+
     def create_widgets(self):
-        # Header
-        header = tk.Frame(self.frame, bg='#2196F3', height=60)
-        header.pack(fill='x')
-        
-        tk.Label(header, text="Gerenciamento de Notas", 
-                font=('Arial', 16, 'bold'), bg='#2196F3', 
-                fg='white').pack(side='left', padx=20, pady=15)
-        
-        back_btn = tk.Button(header, text="← Voltar", font=('Arial', 10),
-                            bg='#1976D2', fg='white', 
-                            command=self.voltar, cursor='hand2', padx=15)
-        back_btn.pack(side='right', padx=20)
-        
-        # Botões de ação
-        btn_frame = tk.Frame(self.frame, bg='#f0f0f0')
+        header = tk.Frame(self.frame, bg="#2196F3", height=60)
+        header.pack(fill="x")
+
+        tk.Label(header, text="Gerenciamento de Notas", font=("Arial", 16, "bold"), bg="#2196F3", fg="white").pack(side="left", padx=20, pady=15)
+
+        back_btn = tk.Button(header, text="← Voltar", font=("Arial", 10), bg="#1976D2", fg="white", command=self.voltar, cursor="hand2", padx=15)
+        back_btn.pack(side="right", padx=20)
+
+        btn_frame = tk.Frame(self.frame, bg="#f0f0f0")
         btn_frame.pack(pady=20)
-        
-        tk.Button(btn_frame, text="Novo", font=('Arial', 11, 'bold'),
-                 bg='#4CAF50', fg='white', width=12, command=self.novo,
-                 cursor='hand2').grid(row=0, column=0, padx=5)
-        
-        tk.Button(btn_frame, text="Editar", font=('Arial', 11, 'bold'),
-                 bg='#FF9800', fg='white', width=12, command=self.editar,
-                 cursor='hand2').grid(row=0, column=1, padx=5)
-        
-        tk.Button(btn_frame, text="Remover", font=('Arial', 11, 'bold'),
-                 bg='#F44336', fg='white', width=12, command=self.remover,
-                 cursor='hand2').grid(row=0, column=2, padx=5)
-        
-        # Treeview
-        tree_frame = tk.Frame(self.frame, bg='white')
-        tree_frame.pack(pady=10, padx=20, fill='both', expand=True)
-        
+
+        tk.Button(btn_frame, text="Novo", font=("Arial", 11, "bold"), bg="#4CAF50", fg="white", width=12, command=self.novo, cursor="hand2").grid(row=0, column=0, padx=5)
+        tk.Button(btn_frame, text="Editar", font=("Arial", 11, "bold"), bg="#FF9800", fg="white", width=12, command=self.editar, cursor="hand2").grid(row=0, column=1, padx=5)
+        tk.Button(btn_frame, text="Remover", font=("Arial", 11, "bold"), bg="#F44336", fg="white", width=12, command=self.remover, cursor="hand2").grid(row=0, column=2, padx=5)
+
+        tree_frame = tk.Frame(self.frame, bg="white")
+        tree_frame.pack(pady=10, padx=20, fill="both", expand=True)
+
         scrollbar = ttk.Scrollbar(tree_frame)
-        scrollbar.pack(side='right', fill='y')
-        
-        self.tree = ttk.Treeview(tree_frame, columns=('TurmaNome', 'NomeAluno', 'DisciNome', 'ProfeNome', 'Avali', 'Nota'),
-                                show='headings', yscrollcommand=scrollbar.set)
-        
-        self.tree.heading('TurmaNome', text='Turma')
-        self.tree.heading('NomeAluno', text='Aluno')
-        self.tree.heading('DisciNome', text='Disciplina')
-        self.tree.heading('ProfeNome', text='Professor')
-        self.tree.heading('Avali', text='Avaliação')
-        self.tree.heading('Nota', text='Nota')
-        
-        self.tree.column('TurmaNome', width=50)
-        self.tree.column('NomeAluno', width=200)
-        self.tree.column('DisciNome', width=120)
-        self.tree.column('ProfeNome', width=120)
-        self.tree.column('Avali', width=150)
-        self.tree.column('Nota', width=150)
-        
-        self.tree.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        self.tree = ttk.Treeview(tree_frame, columns=("TurmaNome", "NomeAluno", "DisciNome", "ProfeNome", "Avali", "Nota"), show="headings", yscrollcommand=scrollbar.set)
+
+        self.tree.heading("TurmaNome", text="Turma")
+        self.tree.heading("NomeAluno", text="Aluno")
+        self.tree.heading("DisciNome", text="Disciplina")
+        self.tree.heading("ProfeNome", text="Professor")
+        self.tree.heading("Avali", text="Avaliação")
+        self.tree.heading("Nota", text="Nota")
+
+        self.tree.column("TurmaNome", width=80)
+        self.tree.column("NomeAluno", width=220)
+        self.tree.column("DisciNome", width=160)
+        self.tree.column("ProfeNome", width=180)
+        self.tree.column("Avali", width=180)
+        self.tree.column("Nota", width=80)
+
+        self.tree.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=self.tree.yview)
-    
+
     def carregar_dados(self):
-        from database.connection import DatabaseConnection
-        from database.models import Aluno, Turma, Nota, Disciplina, Professor, Avaliacao
-        
         session = DatabaseConnection.get_session()
         try:
-            notas = session.query(Nota).all()
-            
-            # Limpar árvore
+            notas = session.query(Nota).join(Nota.turma).join(Nota.aluno).join(Nota.disciplina).join(Nota.professor).join(Nota.avaliacao).all()
+
             for item in self.tree.get_children():
                 self.tree.delete(item)
-            
-            # Preencher com dados do banco
-            for nota in notas:
-                turma_nome = nota.turma.nome
-                aluno_nome = nota.aluno.nome_completo
-                disci_nome = nota.disciplina.nome_disciplina
-                profe_nome = nota.professor.nome_completo
-                avali_nome = nota.avaliacao.nome_avaliacao
-                
-                self.tree.insert('', 'end', values=(
-                    turma_nome,
-                    aluno_nome,
-                    disci_nome,
-                    profe_nome,
-                    avali_nome,
-                    nota.nota
-                ))
+
+            self._last_rows.clear()
+
+            for n in notas:
+                values = (n.turma.nome, n.aluno.nome_completo, n.disciplina.nome_disciplina, n.professor.nome_completo, n.avaliacao.nome_avaliacao, float(n.nota) if n.nota is not None else None)
+                iid = self.tree.insert("", "end", values=values)
+
+                self._last_rows[iid] = {
+                    "id_turma": n.id_turma,
+                    "id_aluno": n.id_aluno,
+                    "id_disciplina": n.id_disciplina,
+                    "id_professor": n.id_professor,
+                    "id_avaliacao": n.id_avaliacao,
+                }
         finally:
             session.close()
-        
-        # Dados de exemplo (remover quando implementar banco)
-        # self.tree.insert('', 'end', values=(1, 'João Silva', '123.456.789-00', '01/01/2010', '1º Ano A'))
-        # self.tree.insert('', 'end', values=(2, 'Maria Costa', '987.654.321-00', '15/03/2011', '2º Ano B'))
-        # self.tree.insert('', 'end', values=(3, 'Pedro Santos', '456.789.123-00', '22/07/2009', '1º Ano A'))
-    
+
     def novo(self):
-        """Abrir formulário para cadastrar novo aluno"""
-        self.abrir_formulario(modo='novo')
-    
+        self.abrir_formulario(modo="novo")
+
     def editar(self):
-        """Abrir formulário para editar aluno selecionado"""
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Aviso", "Selecione um aluno para editar!")
+            messagebox.showwarning("Aviso", "Selecione uma nota para editar!")
             return
-        
-        # Pegar dados do aluno selecionado
-        item = self.tree.item(selected[0])
-        valores = item['values']
-        
-        dados_aluno = {
-            'id': valores[0],
-            'nome': valores[1],
-            'cpf': valores[2],
-            'data_nasc': valores[3],
-            'turma': valores[4]
-        }
-        
-        self.abrir_formulario(modo='editar', dados=dados_aluno)
-    
+
+        iid = selected[0]
+        key = self._last_rows.get(iid)
+        if not key:
+            messagebox.showerror("Erro", "Não foi possível identificar a nota selecionada.")
+            return
+
+        session = DatabaseConnection.get_session()
+        try:
+            nota_obj = session.query(Nota).filter_by(id_turma=key["id_turma"], id_aluno=key["id_aluno"], id_disciplina=key["id_disciplina"], id_professor=key["id_professor"], id_avaliacao=key["id_avaliacao"]).first()
+            if not nota_obj:
+                messagebox.showerror("Erro", "Nota não encontrada no banco.")
+                return
+
+            dados = {
+                "id_turma": nota_obj.id_turma,
+                "id_aluno": nota_obj.id_aluno,
+                "id_disciplina": nota_obj.id_disciplina,
+                "id_professor": nota_obj.id_professor,
+                "id_avaliacao": nota_obj.id_avaliacao,
+                "nota": float(nota_obj.nota) if nota_obj.nota is not None else None,
+                "peso": float(nota_obj.peso) if nota_obj.peso is not None else None,
+            }
+        finally:
+            session.close()
+
+        self.abrir_formulario(modo="editar", dados=dados)
+
     def remover(self):
-        """Remover aluno selecionado"""
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Aviso", "Selecione um aluno para remover!")
+            messagebox.showwarning("Aviso", "Selecione uma nota para remover!")
             return
-        
-        item = self.tree.item(selected[0])
-        valores = item['values']
-        aluno_id = valores[0]
+
+        iid = selected[0]
+        key = self._last_rows.get(iid)
+        if not key:
+            messagebox.showerror("Erro", "Não foi possível identificar a nota selecionada.")
+            return
+
+        valores = self.tree.item(iid)["values"]
         aluno_nome = valores[1]
-        
-        # Confirmar remoção
-        resposta = messagebox.askyesno(
-            "Confirmar Remoção", 
-            f"Deseja realmente remover o aluno '{aluno_nome}'?\n\n"
-            "Esta ação não pode ser desfeita!"
-        )
-        
-        if resposta:
-            """
-            TODO: Remover do banco de dados
-            
-            Exemplo SQLAlchemy:
-            
-            from database.connection import DatabaseConnection
-            from database.models import Aluno
-            
-            session = DatabaseConnection.get_session()
-            try:
-                aluno = session.query(Aluno).filter_by(id=aluno_id).first()
-                
-                if aluno:
-                    session.delete(aluno)
-                    session.commit()
-                    messagebox.showinfo("Sucesso", "Aluno removido com sucesso!")
-                    self.carregar_dados()
-                
-            except Exception as e:
-                session.rollback()
-                messagebox.showerror("Erro", f"Erro ao remover: {str(e)}")
-            finally:
-                session.close()
-            
-            
-            Exemplo psycopg2:
-            
-            from database.connection import DatabaseConnection
-            
-            conn = DatabaseConnection.get_psycopg2_connection()
-            cursor = conn.cursor()
-            
-            try:
-                cursor.execute("DELETE FROM alunos WHERE id = %s", (aluno_id,))
-                conn.commit()
-                messagebox.showinfo("Sucesso", "Aluno removido com sucesso!")
-                self.carregar_dados()
-                
-            except Exception as e:
-                conn.rollback()
-                messagebox.showerror("Erro", f"Erro ao remover: {str(e)}")
-            finally:
-                cursor.close()
-                conn.close()
-            """
-            
-            messagebox.showinfo("Sucesso", 
-                f"Aluno '{aluno_nome}' removido!\n(Implementar remoção no banco)")
-            self.tree.delete(selected[0])
-    
-    def abrir_formulario(self, modo='novo', dados=None):
-        """
-        Abrir janela de formulário para cadastro/edição
-        
-        Args:
-            modo: 'novo' ou 'editar'
-            dados: dicionário com dados do aluno (apenas para edição)
-        """
-        
-        # Criar janela de diálogo
+        avali_nome = valores[4]
+
+        resp = messagebox.askyesno("Confirmar Remoção", f"Deseja remover a nota do aluno '{aluno_nome}' na avaliação '{avali_nome}'?\n\nEsta ação não pode ser desfeita!")
+        if not resp:
+            return
+
+        session = DatabaseConnection.get_session()
+        try:
+            nota_obj = session.query(Nota).filter_by(id_turma=key["id_turma"], id_aluno=key["id_aluno"], id_disciplina=key["id_disciplina"], id_professor=key["id_professor"], id_avaliacao=key["id_avaliacao"]).first()
+            if not nota_obj:
+                messagebox.showerror("Erro", "Nota não encontrada no banco.")
+                return
+
+            session.delete(nota_obj)
+            session.commit()
+
+            messagebox.showinfo("Sucesso", "Nota removida com sucesso!")
+            self.carregar_dados()
+        except Exception as e:
+            session.rollback()
+            messagebox.showerror("Erro", f"Erro ao remover: {str(e)}")
+        finally:
+            session.close()
+
+    def abrir_formulario(self, modo="novo", dados=None):
         dialog = tk.Toplevel(self.root)
-        dialog.title("Nova Nota" if modo == 'novo' else "Editar Nota")
-        dialog.geometry("550x700")
+        dialog.title("Nova Nota" if modo == "novo" else "Editar Nota")
+        dialog.geometry("520x720")
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.resizable(True, True)
-        
-        # Centralizar janela
+
         dialog.update_idletasks()
         x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
         y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
-        dialog.geometry(f'+{x}+{y}')
-        
-        # Frame principal (sem canvas, aumentamos a janela)
-        main_frame = tk.Frame(dialog, bg='white', padx=30, pady=20)
-        main_frame.pack(fill='both', expand=True)
-        
-        # Título
-        titulo = "Cadastrar Novo Aluno" if modo == 'novo' else f"Editar Aluno #{dados['id']}"
-        tk.Label(main_frame, text=titulo, 
-                font=('Arial', 16, 'bold'), bg='white', fg='#2196F3').pack(pady=15)
-        
-        # Frame do formulário
-        form_frame = tk.Frame(main_frame, bg='white')
-        form_frame.pack(pady=10, fill='both', expand=True)
-        
-        # ========== CAMPO: Nome Completo ==========
-        tk.Label(form_frame, text="Nome Completo: *", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=0, column=0, sticky='w', pady=12)
-        
-        nome_entry = tk.Entry(form_frame, font=('Arial', 11), width=35)
-        nome_entry.grid(row=1, column=0, sticky='ew', pady=(0, 10))
-        
-        # ========== CAMPO: CPF ==========
-        tk.Label(form_frame, text="CPF: *", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=2, column=0, sticky='w', pady=12)
-        
-        cpf_frame = tk.Frame(form_frame, bg='white')
-        cpf_frame.grid(row=3, column=0, sticky='ew', pady=(0, 10))
-        
-        cpf_entry = tk.Entry(cpf_frame, font=('Arial', 11), width=20)
-        cpf_entry.pack(side='left')
-        
-        tk.Label(cpf_frame, text="(Ex: 123.456.789-00)", 
-                font=('Arial', 9, 'italic'), bg='white', fg='#666').pack(side='left', padx=10)
-        
-        # ========== CAMPO: Data de Nascimento ==========
-        tk.Label(form_frame, text="Data de Nascimento: *", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=4, column=0, sticky='w', pady=12)
-        
-        data_frame = tk.Frame(form_frame, bg='white')
-        data_frame.grid(row=5, column=0, sticky='ew', pady=(0, 10))
-        
-        # Dia
-        tk.Label(data_frame, text="Dia:", font=('Arial', 10), bg='white').pack(side='left')
-        dia_var = tk.StringVar()
-        dia_combo = ttk.Combobox(data_frame, textvariable=dia_var, width=5, 
-                                 values=[str(i).zfill(2) for i in range(1, 32)], 
-                                 state='readonly', font=('Arial', 10))
-        dia_combo.pack(side='left', padx=5)
-        
-        # Mês
-        tk.Label(data_frame, text="Mês:", font=('Arial', 10), bg='white').pack(side='left', padx=(10, 0))
-        mes_var = tk.StringVar()
-        mes_combo = ttk.Combobox(data_frame, textvariable=mes_var, width=5,
-                                 values=[str(i).zfill(2) for i in range(1, 13)],
-                                 state='readonly', font=('Arial', 10))
-        mes_combo.pack(side='left', padx=5)
-        
-        # Ano
-        tk.Label(data_frame, text="Ano:", font=('Arial', 10), bg='white').pack(side='left', padx=(10, 0))
-        ano_var = tk.StringVar()
-        anos = [str(i) for i in range(2000, 2020)]
-        ano_combo = ttk.Combobox(data_frame, textvariable=ano_var, width=7,
-                                 values=anos, state='readonly', font=('Arial', 10))
-        ano_combo.pack(side='left', padx=5)
-        
-        # ========== CAMPO: Turma ==========
-        tk.Label(form_frame, text="Turma:", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=6, column=0, sticky='w', pady=12)
-        
-        # TODO: Carregar turmas do banco de dados
-        turmas = ["Selecione...", "1º Ano A", "1º Ano B", "2º Ano A", "2º Ano B", "3º Ano A"]
+        dialog.geometry(f"+{x}+{y}")
+
+        main_frame = tk.Frame(dialog, bg="white", padx=24, pady=18)
+        main_frame.pack(fill="both", expand=True)
+
+        titulo = "Cadastrar Nova Nota" if modo == "novo" else "Editar Nota"
+        tk.Label(main_frame, text=titulo, font=("Arial", 16, "bold"), bg="white", fg="#2196F3").pack(pady=10)
+
+        form_frame = tk.Frame(main_frame, bg="white")
+        form_frame.pack(pady=10, fill="both", expand=True)
+        form_frame.columnconfigure(0, weight=1)
+
+        session = DatabaseConnection.get_session()
+        try:
+            turmas_db = session.query(Turma).all()
+            alunos_db = session.query(Aluno).all()
+            disciplinas_db = session.query(Disciplina).all()
+            professores_db = session.query(Professor).all()
+            avaliacoes_db = session.query(Avaliacao).all()
+        finally:
+            session.close()
+
+        turma_map = {f"{t.nome} (#{t.id_turma})": t.id_turma for t in turmas_db}
+        aluno_map = {f"{a.nome_completo} (#{a.id_aluno})": a.id_aluno for a in alunos_db}
+        disc_map = {f"{d.nome_disciplina} (#{d.id_disciplina})": d.id_disciplina for d in disciplinas_db}
+        prof_map = {f"{p.nome_completo} (#{p.id_professor})": p.id_professor for p in professores_db}
+        avali_map = {f"{av.nome_avaliacao} (#{av.id_avaliacao})": av.id_avaliacao for av in avaliacoes_db}
+
+        turmas = ["Selecione..."] + list(turma_map.keys())
+        alunos = ["Selecione..."] + list(aluno_map.keys())
+        disciplinas = ["Selecione..."] + list(disc_map.keys())
+        professores = ["Selecione..."] + list(prof_map.keys())
+        avaliacoes = ["Selecione..."] + list(avali_map.keys())
+
+        tk.Label(form_frame, text="Turma: *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=0, column=0, sticky="w", pady=(6, 6))
         turma_var = tk.StringVar(value=turmas[0])
-        turma_combo = ttk.Combobox(form_frame, textvariable=turma_var,
-                                   values=turmas, font=('Arial', 11),
-                                   width=33, state='readonly')
-        turma_combo.grid(row=7, column=0, sticky='ew', pady=(0, 10))
-        
-        # ========== CAMPO: Endereço (Opcional) ==========
-        tk.Label(form_frame, text="Endereço: (opcional)", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=8, column=0, sticky='w', pady=12)
-        
-        endereco_entry = tk.Entry(form_frame, font=('Arial', 11), width=35)
-        endereco_entry.grid(row=9, column=0, sticky='ew', pady=(0, 10))
-        
-        # ========== CAMPO: Telefone (Opcional) ==========
-        tk.Label(form_frame, text="Telefone: (opcional)", font=('Arial', 11, 'bold'), 
-                bg='white', fg='#333').grid(row=10, column=0, sticky='w', pady=12)
-        
-        telefone_frame = tk.Frame(form_frame, bg='white')
-        telefone_frame.grid(row=11, column=0, sticky='ew', pady=(0, 10))
-        
-        telefone_entry = tk.Entry(telefone_frame, font=('Arial', 11), width=20)
-        telefone_entry.pack(side='left')
-        
-        tk.Label(telefone_frame, text="(Ex: (85) 99999-9999)", 
-                font=('Arial', 9, 'italic'), bg='white', fg='#666').pack(side='left', padx=10)
-        
-        # Preencher campos se for edição
-        if modo == 'editar' and dados:
-            nome_entry.insert(0, dados['nome'])
-            cpf_entry.insert(0, dados['cpf'])
-            
-            # Preencher data
-            if dados['data_nasc']:
-                try:
-                    partes = dados['data_nasc'].split('/')
-                    dia_var.set(partes[0])
-                    mes_var.set(partes[1])
-                    ano_var.set(partes[2])
-                except:
-                    pass
-            
-            if dados['turma']:
-                turma_var.set(dados['turma'])
-        
-        # Nota de campos obrigatórios
-        tk.Label(main_frame, text="* Campos obrigatórios", 
-                font=('Arial', 9, 'italic'), bg='white', fg='#666').pack(pady=(10, 5))
-        
-        # Frame de botões
-        btn_frame = tk.Frame(main_frame, bg='white')
-        btn_frame.pack(pady=15)
-        
-        # ========== FUNÇÃO: Salvar ==========
-        def salvar():
-            # Validar campos
-            nome = nome_entry.get().strip()
-            cpf = cpf_entry.get().strip()
-            dia = dia_var.get()
-            mes = mes_var.get()
-            ano = ano_var.get()
-            turma = turma_var.get()
-            endereco = endereco_entry.get().strip()
-            telefone = telefone_entry.get().strip()
-            
-            # Validações
-            if not nome:
-                messagebox.showerror("Erro", "O campo Nome é obrigatório!")
-                nome_entry.focus()
-                return
-            
-            if not cpf:
-                messagebox.showerror("Erro", "O campo CPF é obrigatório!")
-                cpf_entry.focus()
-                return
-            
-            if not dia or not mes or not ano:
-                messagebox.showerror("Erro", "A Data de Nascimento é obrigatória!")
-                return
-            
-            # Validar formato de data
+        turma_combo = ttk.Combobox(form_frame, textvariable=turma_var, values=turmas, font=("Arial", 11), state="readonly")
+        turma_combo.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Aluno: *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=2, column=0, sticky="w", pady=(6, 6))
+        aluno_var = tk.StringVar(value=alunos[0])
+        aluno_combo = ttk.Combobox(form_frame, textvariable=aluno_var, values=alunos, font=("Arial", 11), state="readonly")
+        aluno_combo.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Disciplina: *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=4, column=0, sticky="w", pady=(6, 6))
+        disc_var = tk.StringVar(value=disciplinas[0])
+        disc_combo = ttk.Combobox(form_frame, textvariable=disc_var, values=disciplinas, font=("Arial", 11), state="readonly")
+        disc_combo.grid(row=5, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Professor: *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=6, column=0, sticky="w", pady=(6, 6))
+        prof_var = tk.StringVar(value=professores[0])
+        prof_combo = ttk.Combobox(form_frame, textvariable=prof_var, values=professores, font=("Arial", 11), state="readonly")
+        prof_combo.grid(row=7, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Avaliação: *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=8, column=0, sticky="w", pady=(6, 6))
+        avali_var = tk.StringVar(value=avaliacoes[0])
+        avali_combo = ttk.Combobox(form_frame, textvariable=avali_var, values=avaliacoes, font=("Arial", 11), state="readonly")
+        avali_combo.grid(row=9, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Nota (0 a 10): *", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=10, column=0, sticky="w", pady=(6, 6))
+        nota_entry = tk.Entry(form_frame, font=("Arial", 11))
+        nota_entry.grid(row=11, column=0, sticky="ew", pady=(0, 10))
+
+        tk.Label(form_frame, text="Peso (opcional):", font=("Arial", 11, "bold"), bg="white", fg="#333").grid(row=12, column=0, sticky="w", pady=(6, 6))
+        peso_entry = tk.Entry(form_frame, font=("Arial", 11))
+        peso_entry.grid(row=13, column=0, sticky="ew", pady=(0, 10))
+
+        if modo == "editar" and dados:
+            turma_key = next((k for k, v in turma_map.items() if v == dados["id_turma"]), None)
+            aluno_key = next((k for k, v in aluno_map.items() if v == dados["id_aluno"]), None)
+            disc_key = next((k for k, v in disc_map.items() if v == dados["id_disciplina"]), None)
+            prof_key = next((k for k, v in prof_map.items() if v == dados["id_professor"]), None)
+            avali_key = next((k for k, v in avali_map.items() if v == dados["id_avaliacao"]), None)
+
+            if turma_key:
+                turma_var.set(turma_key)
+            if aluno_key:
+                aluno_var.set(aluno_key)
+            if disc_key:
+                disc_var.set(disc_key)
+            if prof_key:
+                prof_var.set(prof_key)
+            if avali_key:
+                avali_var.set(avali_key)
+
+            if dados.get("nota") is not None:
+                nota_entry.insert(0, str(dados["nota"]))
+            if dados.get("peso") is not None:
+                peso_entry.insert(0, str(dados["peso"]))
+
+        def _parse_float(value: str, field_name: str, required: bool = False):
+            v = value.strip().replace(",", ".")
+            if not v:
+                if required:
+                    raise ValueError(f"O campo {field_name} é obrigatório.")
+                return None
             try:
-                data_nascimento = f"{dia}/{mes}/{ano}"
-                datetime.strptime(data_nascimento, '%d/%m/%Y')
+                return float(v)
             except ValueError:
-                messagebox.showerror("Erro", "Data de nascimento inválida!")
-                return
-            
-            # Validar CPF (formato básico)
-            if len(cpf.replace('.', '').replace('-', '')) != 11:
-                messagebox.showerror("Erro", "CPF deve ter 11 dígitos!")
-                cpf_entry.focus()
-                return
-            
-            if modo == 'novo':
-                """
-                TODO: Inserir no banco de dados
-                
-                Exemplo SQLAlchemy:
-                
-                from database.connection import DatabaseConnection
-                from database.models import Aluno, Turma
-                from datetime import datetime
-                
+                raise ValueError(f"O campo {field_name} deve ser numérico.")
+
+        def salvar():
+            try:
+                turma_txt = turma_var.get()
+                aluno_txt = aluno_var.get()
+                disc_txt = disc_var.get()
+                prof_txt = prof_var.get()
+                avali_txt = avali_var.get()
+
+                if turma_txt == "Selecione...":
+                    raise ValueError("Selecione uma Turma.")
+                if aluno_txt == "Selecione...":
+                    raise ValueError("Selecione um Aluno.")
+                if disc_txt == "Selecione...":
+                    raise ValueError("Selecione uma Disciplina.")
+                if prof_txt == "Selecione...":
+                    raise ValueError("Selecione um Professor.")
+                if avali_txt == "Selecione...":
+                    raise ValueError("Selecione uma Avaliação.")
+
+                id_turma = turma_map[turma_txt]
+                id_aluno = aluno_map[aluno_txt]
+                id_disciplina = disc_map[disc_txt]
+                id_professor = prof_map[prof_txt]
+                id_avaliacao = avali_map[avali_txt]
+
+                nota_val = _parse_float(nota_entry.get(), "Nota", required=True)
+                if nota_val < 0 or nota_val > 10:
+                    raise ValueError("A Nota deve estar entre 0 e 10.")
+
+                peso_val = _parse_float(peso_entry.get(), "Peso", required=False)
+
                 session = DatabaseConnection.get_session()
                 try:
-                    # Buscar ID da turma
-                    turma_id = None
-                    if turma != "Selecione...":
-                        turma_obj = session.query(Turma).filter_by(nome=turma).first()
-                        if turma_obj:
-                            turma_id = turma_obj.id
-                    
-                    # Converter data
-                    data_obj = datetime.strptime(data_nascimento, '%d/%m/%Y').date()
-                    
-                    # Criar novo aluno
-                    novo_aluno = Aluno(
-                        nome=nome,
-                        cpf=cpf,
-                        data_nascimento=data_obj,
-                        turma_id=turma_id
-                    )
-                    
-                    session.add(novo_aluno)
-                    session.commit()
-                    
-                    messagebox.showinfo("Sucesso", "Aluno cadastrado com sucesso!")
-                    dialog.destroy()
-                    self.carregar_dados()
-                    
-                except Exception as e:
-                    session.rollback()
-                    messagebox.showerror("Erro", f"Erro ao salvar: {str(e)}")
-                finally:
-                    session.close()
-                
-                
-                Exemplo psycopg2:
-                
-                from database.connection import DatabaseConnection
-                
-                conn = DatabaseConnection.get_psycopg2_connection()
-                cursor = conn.cursor()
-                
-                try:
-                    # Buscar ID da turma
-                    turma_id = None
-                    if turma != "Selecione...":
-                        cursor.execute("SELECT id FROM turmas WHERE nome = %s", (turma,))
-                        result = cursor.fetchone()
-                        if result:
-                            turma_id = result[0]
-                    
-                    # Converter data para formato SQL
-                    from datetime import datetime
-                    data_obj = datetime.strptime(data_nascimento, '%d/%m/%Y').date()
-                    
-                    # Inserir aluno
-                    cursor.execute('''
-                        INSERT INTO alunos (nome, cpf, data_nascimento, turma_id)
-                        VALUES (%s, %s, %s, %s)
-                    ''', (nome, cpf, data_obj, turma_id))
-                    
-                    conn.commit()
-                    messagebox.showinfo("Sucesso", "Aluno cadastrado com sucesso!")
-                    dialog.destroy()
-                    self.carregar_dados()
-                    
-                except Exception as e:
-                    conn.rollback()
-                    messagebox.showerror("Erro", f"Erro ao salvar: {str(e)}")
-                finally:
-                    cursor.close()
-                    conn.close()
-                """
-                
-                messagebox.showinfo("Sucesso", 
-                    f"Aluno '{nome}' cadastrado!\n(Implementar salvamento no banco)")
-                dialog.destroy()
-                self.carregar_dados()
-                
-            else:  # modo == 'editar'
-                """
-                TODO: Atualizar no banco de dados
-                
-                Exemplo SQLAlchemy:
-                
-                from database.connection import DatabaseConnection
-                from database.models import Aluno, Turma
-                from datetime import datetime
-                
-                session = DatabaseConnection.get_session()
-                try:
-                    aluno = session.query(Aluno).filter_by(id=dados['id']).first()
-                    
-                    if aluno:
-                        # Buscar ID da turma
-                        turma_id = None
-                        if turma != "Selecione...":
-                            turma_obj = session.query(Turma).filter_by(nome=turma).first()
-                            if turma_obj:
-                                turma_id = turma_obj.id
-                        
-                        # Converter data
-                        data_obj = datetime.strptime(data_nascimento, '%d/%m/%Y').date()
-                        
-                        # Atualizar campos
-                        aluno.nome = nome
-                        aluno.cpf = cpf
-                        aluno.data_nascimento = data_obj
-                        aluno.turma_id = turma_id
-                        
+                    if modo == "novo":
+                        existente = session.query(Nota).filter_by(id_turma=id_turma, id_aluno=id_aluno, id_disciplina=id_disciplina, id_professor=id_professor, id_avaliacao=id_avaliacao).first()
+                        if existente:
+                            raise ValueError("Já existe uma nota para essa combinação (Turma/Aluno/Disciplina/Professor/Avaliação).")
+
+                        nova = Nota(id_turma=id_turma, id_aluno=id_aluno, id_disciplina=id_disciplina, id_professor=id_professor, id_avaliacao=id_avaliacao, nota=nota_val, peso=peso_val)
+                        session.add(nova)
                         session.commit()
-                        messagebox.showinfo("Sucesso", "Aluno atualizado com sucesso!")
+
+                        messagebox.showinfo("Sucesso", "Nota cadastrada com sucesso!")
                         dialog.destroy()
                         self.carregar_dados()
-                    
-                except Exception as e:
+                    else:
+                        if not dados:
+                            raise ValueError("Dados da nota para edição não foram carregados.")
+
+                        nota_obj = session.query(Nota).filter_by(id_turma=dados["id_turma"], id_aluno=dados["id_aluno"], id_disciplina=dados["id_disciplina"], id_professor=dados["id_professor"], id_avaliacao=dados["id_avaliacao"]).first()
+                        if not nota_obj:
+                            raise ValueError("Nota não encontrada no banco para atualização.")
+
+                        chave_mudou = (id_turma != dados["id_turma"]) or (id_aluno != dados["id_aluno"]) or (id_disciplina != dados["id_disciplina"]) or (id_professor != dados["id_professor"]) or (id_avaliacao != dados["id_avaliacao"])
+
+                        if chave_mudou:
+                            existe_destino = session.query(Nota).filter_by(id_turma=id_turma, id_aluno=id_aluno, id_disciplina=id_disciplina, id_professor=id_professor, id_avaliacao=id_avaliacao).first()
+                            if existe_destino:
+                                raise ValueError("Já existe uma nota com a nova combinação escolhida. Altere os campos ou edite apenas nota/peso.")
+
+                            session.delete(nota_obj)
+                            session.flush()
+                            # Recriar para manter integridade
+                            nota_obj = Nota(id_turma=id_turma, id_aluno=id_aluno, id_disciplina=id_disciplina, id_professor=id_professor, id_avaliacao=id_avaliacao, nota=nota_val, peso=peso_val)
+                            session.add(nota_obj)
+                        else:
+                            nota_obj.nota = nota_val
+                            nota_obj.peso = peso_val
+
+                        session.commit()
+                        messagebox.showinfo("Sucesso", "Nota atualizada com sucesso!")
+                        dialog.destroy()
+                        self.carregar_dados()
+
+                except Exception:
                     session.rollback()
-                    messagebox.showerror("Erro", f"Erro ao atualizar: {str(e)}")
+                    raise
                 finally:
                     session.close()
-                
-                
-                Exemplo psycopg2:
-                
-                from database.connection import DatabaseConnection
-                
-                conn = DatabaseConnection.get_psycopg2_connection()
-                cursor = conn.cursor()
-                
-                try:
-                    # Buscar ID da turma
-                    turma_id = None
-                    if turma != "Selecione...":
-                        cursor.execute("SELECT id FROM turmas WHERE nome = %s", (turma,))
-                        result = cursor.fetchone()
-                        if result:
-                            turma_id = result[0]
-                    
-                    # Converter data
-                    from datetime import datetime
-                    data_obj = datetime.strptime(data_nascimento, '%d/%m/%Y').date()
-                    
-                    # Atualizar aluno
-                    cursor.execute('''
-                        UPDATE alunos 
-                        SET nome = %s, cpf = %s, data_nascimento = %s, turma_id = %s
-                        WHERE id = %s
-                    ''', (nome, cpf, data_obj, turma_id, dados['id']))
-                    
-                    conn.commit()
-                    messagebox.showinfo("Sucesso", "Aluno atualizado com sucesso!")
-                    dialog.destroy()
-                    self.carregar_dados()
-                    
-                except Exception as e:
-                    conn.rollback()
-                    messagebox.showerror("Erro", f"Erro ao atualizar: {str(e)}")
-                finally:
-                    cursor.close()
-                    conn.close()
-                """
-                
-                messagebox.showinfo("Sucesso", 
-                    f"Aluno '{nome}' atualizado!\n(Implementar atualização no banco)")
-                dialog.destroy()
-                self.carregar_dados()
-        
-        # Botão Salvar
-        cor_botao = '#4CAF50' if modo == 'novo' else '#FF9800'
-        texto_botao = 'Cadastrar' if modo == 'novo' else 'Salvar Alterações'
-        
-        tk.Button(btn_frame, text=texto_botao, font=('Arial', 12, 'bold'),
-                 bg=cor_botao, fg='white', width=18, height=2,
-                 command=salvar, cursor='hand2').grid(row=0, column=0, padx=5)
-        
-        # Botão Cancelar
-        tk.Button(btn_frame, text="Cancelar", font=('Arial', 12),
-                 bg='#757575', fg='white', width=18, height=2,
-                 command=dialog.destroy, cursor='hand2').grid(row=0, column=1, padx=5)
-    
+
+            except Exception as e:
+                messagebox.showerror("Erro", str(e))
+
+        btn_frame = tk.Frame(main_frame, bg="white")
+        btn_frame.pack(pady=12)
+
+        cor_botao = "#4CAF50" if modo == "novo" else "#FF9800"
+        texto_botao = "Cadastrar" if modo == "novo" else "Salvar Alterações"
+
+        tk.Button(btn_frame, text=texto_botao, font=("Arial", 12, "bold"), bg=cor_botao, fg="white", width=18, height=2, command=salvar, cursor="hand2").grid(row=0, column=0, padx=5)
+        tk.Button(btn_frame, text="Cancelar", font=("Arial", 12), bg="#757575", fg="white", width=18, height=2, command=dialog.destroy, cursor="hand2").grid(row=0, column=1, padx=5)
+
     def voltar(self):
         self.frame.destroy()
-        # IMPORTAÇÃO LOCAL
         from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        DashboardScreen(self.root, self.username, self.extra)
