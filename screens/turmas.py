@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-class ProfessoresScreen:
+class TurmasScreen:
     def __init__(self, root, username):
         self.root = root
         self.username = username
