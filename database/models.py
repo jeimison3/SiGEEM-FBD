@@ -58,7 +58,8 @@ class Professor(Base):
 
     usuario = relationship("Usuario", foreign_keys=[id_usuario])
     # Versão Correta:
-    disciplinas_habilitadas = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
+    disciplinas_habilitadas: Mapped[List["Disciplina"]] = relationship("Disciplina", secondary=prof_habilitado, back_populates="professores")
+    notas: Mapped[List["Nota"]] = relationship(back_populates="professor")
 
 class Disciplina(Base):
     __tablename__ = 'disciplina'
@@ -70,7 +71,7 @@ class Disciplina(Base):
     ativa = Column(Boolean, default=True)
     prerequisito = Column(Integer, ForeignKey('disciplina.id_disciplina'))
 
-    professores = relationship(
+    professores: Mapped[List["Professor"]] = relationship(
         "Professor", 
         secondary=prof_habilitado, 
         back_populates="disciplinas_habilitadas",
@@ -91,6 +92,7 @@ class Nota(Base):
     turma: Mapped["Turma"] = relationship("Turma", foreign_keys=[id_turma], back_populates="notas")
     aluno: Mapped["Aluno"] = relationship("Aluno", foreign_keys=[id_aluno], back_populates="notas")
     disciplina: Mapped["Disciplina"] = relationship("Disciplina", foreign_keys=[id_disciplina], back_populates="notas")
+    professor: Mapped["Professor"] = relationship("Professor", foreign_keys=[id_professor], back_populates="notas")
     avaliacao: Mapped["Avaliacao"] = relationship("Avaliacao", foreign_keys=[id_avaliacao], back_populates="notas")
     
 class Avaliacao(Base):

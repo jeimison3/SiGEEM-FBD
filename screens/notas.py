@@ -87,34 +87,11 @@ class NotasScreen:
             
             # Preencher com dados do banco
             for nota in notas:
-                turma_nome = ""
-                aluno_nome = ""
-                disci_nome = ""
-                profe_nome = ""
-                avali_nome = ""
-                # if nota.id_turma:
-                #     turma = session.query(Turma).filter_by(id_turma=nota.id_turma).first()
-                #     if turma:
-                #         turma_nome = turma.nome
                 turma_nome = nota.turma.nome
-                if nota.id_aluno:
-                    aluno = session.query(Aluno).filter_by(id_aluno=nota.id_aluno).first()
-                    if aluno:
-                        aluno_nome = aluno.nome_completo
-                if nota.id_disciplina:
-                    disciplina = session.query(Disciplina).filter_by(id_disciplina=nota.id_disciplina).first()
-                    if disciplina:
-                        disci_nome = disciplina.nome_disciplina
-                if nota.id_professor:
-                    professor = session.query(Professor).filter_by(id_professor=nota.id_professor).first()
-                    if professor:
-                        profe_nome = professor.nome_completo
-                if nota.id_avaliacao:
-                    avaliacao = session.query(Avaliacao).filter_by(id_avaliacao=nota.id_avaliacao).first()
-                    if avaliacao:
-                        avali_nome = avaliacao.nome_avaliacao
-                
-                # data_nasc = aluno.data_nascimento.strftime('%d/%m/%Y') if aluno.data_nascimento else ''
+                aluno_nome = nota.aluno.nome_completo
+                disci_nome = nota.disciplina.nome_disciplina
+                profe_nome = nota.professor.nome_completo
+                avali_nome = nota.avaliacao.nome_avaliacao
                 
                 self.tree.insert('', 'end', values=(
                     turma_nome,
