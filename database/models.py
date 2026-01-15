@@ -7,6 +7,17 @@ prof_habilitado = Table(
     Column('id_professor', Integer, ForeignKey('professor.id_professor'), primary_key=True),
     Column('id_disciplina', Integer, ForeignKey('disciplina.id_disciplina'), primary_key=True)
 )
+class Turma(Base):
+    __tablename__ = 'turma'
+    id_turma = Column(Integer, primary_key=True)
+    nome = Column(String(50), nullable=False)
+    sala = Column(String(10))
+
+class Avaliacao(Base):
+    __tablename__ = 'avaliacoes'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String(100), nullable=False)
+    turma_id = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
 
 class Usuario(Base):
     __tablename__ = 'usuario'
@@ -16,13 +27,6 @@ class Usuario(Base):
     password = Column(String(255), nullable=False)
     nome = Column(String(100))
 
-class Turma(Base):
-    __tablename__ = 'turmas'
-    
-    id = Column(Integer, primary_key=True)
-    nome = Column(String(100), nullable=False)
-    ano = Column(Integer)
-    turno = Column(String(20))
 
 class Aluno(Base):
     __tablename__ = 'alunos'
