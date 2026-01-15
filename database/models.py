@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from database.connection import Base
+from typing import List
 
 prof_habilitado = Table(
     'prof_habilitado', Base.metadata,
@@ -12,6 +13,7 @@ class Turma(Base):
     id_turma = Column(Integer, primary_key=True)
     nome = Column(String(50), nullable=False)
     sala = Column(String(10))
+    notas: Mapped[List["Nota"]] = relationship(back_populates="turma")
 
 class Usuario(Base):
     __tablename__ = 'usuario'
@@ -40,6 +42,7 @@ class Aluno(Base):
         nullable=False
     )
     usuario = relationship("Usuario", foreign_keys=[id_usuario])
+    notas: Mapped[List["Nota"]] = relationship(back_populates="aluno")
 
 
 class Professor(Base):
@@ -68,11 +71,12 @@ class Disciplina(Base):
     prerequisito = Column(Integer, ForeignKey('disciplina.id_disciplina'))
 
     professores = relationship(
-    "Professor", 
-    secondary=prof_habilitado, 
-    back_populates="disciplinas_habilitadas",
-    overlaps="disciplinas_habilitadas"
-)
+        "Professor", 
+        secondary=prof_habilitado, 
+        back_populates="disciplinas_habilitadas",
+        overlaps="disciplinas_habilitadas"
+    )
+    notas: Mapped[List["Nota"]] = relationship(back_populates="disciplina")
 
 class Nota(Base):
     __tablename__ = 'nota'
@@ -84,11 +88,10 @@ class Nota(Base):
     id_avaliacao = Column(Integer, ForeignKey('avaliacao.id_avaliacao'), primary_key=True)
     nota = Column(Float)
     peso = Column(Float)
-    turma = relationship("Turma", foreign_keys=[id_turma])
-    aluno = relationship("Aluno", foreign_keys=[id_aluno])
-    disciplina = relationship("Disciplina", foreign_keys=[id_disciplina])
-    professor = relationship("Professor", foreign_keys=[id_professor])
-    avaliacao = relationship("Avaliacao", foreign_keys=[id_avaliacao])
+    turma: Mapped["Turma"] = relationship("Turma", foreign_keys=[id_turma], back_populates="notas")
+    aluno: Mapped["Aluno"] = relationship("Aluno", foreign_keys=[id_aluno], back_populates="notas")
+    disciplina: Mapped["Disciplina"] = relationship("Disciplina", foreign_keys=[id_disciplina], back_populates="notas")
+    avaliacao: Mapped["Avaliacao"] = relationship("Avaliacao", foreign_keys=[id_avaliacao], back_populates="notas")
     
 class Avaliacao(Base):
     __tablename__ = 'avaliacao'
@@ -101,6 +104,7 @@ class Avaliacao(Base):
     id_disciplina = Column(Integer, ForeignKey('disciplina.id_disciplina'), nullable=False)
     id_turma = Column(Integer, ForeignKey('turma.id_turma'), nullable=False)
     id_professor = Column(Integer, ForeignKey('professor.id_professor'), nullable=False)
+    notas: Mapped[List["Nota"]] = relationship(back_populates="avaliacao")
 
 class Coordenador(Base):
     __tablename__ = 'coordenador'

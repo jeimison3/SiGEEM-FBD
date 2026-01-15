@@ -92,10 +92,11 @@ class NotasScreen:
                 disci_nome = ""
                 profe_nome = ""
                 avali_nome = ""
-                if nota.id_turma:
-                    turma = session.query(Turma).filter_by(id_turma=nota.id_turma).first()
-                    if turma:
-                        turma_nome = turma.nome
+                # if nota.id_turma:
+                #     turma = session.query(Turma).filter_by(id_turma=nota.id_turma).first()
+                #     if turma:
+                #         turma_nome = turma.nome
+                turma_nome = nota.turma.nome
                 if nota.id_aluno:
                     aluno = session.query(Aluno).filter_by(id_aluno=nota.id_aluno).first()
                     if aluno:
@@ -106,7 +107,7 @@ class NotasScreen:
                         disci_nome = disciplina.nome_disciplina
                 if nota.id_professor:
                     professor = session.query(Professor).filter_by(id_professor=nota.id_professor).first()
-                    if turma:
+                    if professor:
                         profe_nome = professor.nome_completo
                 if nota.id_avaliacao:
                     avaliacao = session.query(Avaliacao).filter_by(id_avaliacao=nota.id_avaliacao).first()
