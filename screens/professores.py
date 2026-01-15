@@ -4,9 +4,10 @@ from database.connection import DatabaseConnection
 from database.models import Professor, Usuario
 
 class ProfessoresScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username, extra):
         self.root = root
         self.username = username
+        self.extra = extra
         
         # Definição de Cores
         self.color_header = '#2c3e50'  # Azul Escuro
@@ -211,4 +212,4 @@ class ProfessoresScreen:
     def voltar(self):
         self.main_container.destroy()
         from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        DashboardScreen(self.root, self.username, self.extra)

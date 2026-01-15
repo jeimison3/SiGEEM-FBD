@@ -7,9 +7,10 @@ from tkinter import ttk, messagebox
 from datetime import datetime
 
 class AlunosScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username, extra):
         self.root = root
         self.username = username
+        self.extra = extra
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
         
@@ -588,4 +589,4 @@ class AlunosScreen:
         self.frame.destroy()
         # IMPORTAÇÃO LOCAL
         from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        DashboardScreen(self.root, self.username, self.extra)

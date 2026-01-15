@@ -7,9 +7,10 @@ from tkinter import ttk, messagebox
 
 
 class CoordenadoresScreen:
-    def __init__(self, root, username):
+    def __init__(self, root, username, extra):
         self.root = root
         self.username = username
+        self.extra = extra
 
         self.frame = tk.Frame(root, bg='#f0f0f0')
         self.frame.pack(fill='both', expand=True)
@@ -204,5 +205,5 @@ class CoordenadoresScreen:
     def voltar(self):
         self.frame.destroy()
         from screens.dashboard import DashboardScreen
-        DashboardScreen(self.root, self.username)
+        DashboardScreen(self.root, self.username, self.extra)
 
