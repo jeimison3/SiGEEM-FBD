@@ -50,6 +50,10 @@ class DashboardScreen:
             ("Alunos", self.abrir_alunos, '#2196F3'),
             ("Professores", self.abrir_professores, '#FF9800'),
             ("Disciplinas", self.abrir_disciplinas, '#9C27B0'),
+            ("Notas", self.abrir_notas, '#F44336'),
+            ("Coordenadores", self.abrir_coordenadores, '#673AB7'),
+            # ("Notas", self.abrir_notas, '#F44336'),
+            # ("Frequência", self.abrir_frequencia, '#00BCD4')
         ]
         
         for i, (text, command, color) in enumerate(buttons):
@@ -70,6 +74,12 @@ class DashboardScreen:
         self.frame.destroy()
         from screens.alunos import AlunosScreen
         AlunosScreen(self.root, self.username)
+
+    def abrir_coordenadores(self):
+        self.frame.destroy()
+        # IMPORTAÇÃO LOCAL
+        from screens.coordenadores import CoordenadoresScreen
+        CoordenadoresScreen(self.root, self.username)
     
     def abrir_professores(self):
         self.frame.destroy()
@@ -80,6 +90,18 @@ class DashboardScreen:
         self.frame.destroy()
         from screens.disciplinas import DisciplinasScreen
         DisciplinasScreen(self.root, self.username)
+        
+    def abrir_notas(self):
+        self.frame.destroy()
+        # IMPORTAÇÃO LOCAL
+        from screens.notas import NotasScreen
+        NotasScreen(self.root, self.username)
+    
+    # def abrir_frequencia(self):
+    #     self.frame.destroy()
+    #     # IMPORTAÇÃO LOCAL
+    #     from screens.frequencia import FrequenciaScreen
+    #     FrequenciaScreen(self.root, self.username)
     
     def logout(self):
         from screens.login import LoginScreen
